@@ -108,8 +108,12 @@ app.post('/api/character/assign', requireAuth, (req, res) => {
     latitude: lat ?? null,
     longitude: lon ?? null,
     climate: result.climate,
+    element: result.element,
     zodiac: result.zodiac,
-    caste: result.caste
+    caste: result.caste,
+    tribe: result.tribe,
+    description: result.description,
+    abilities: JSON.stringify(result.abilities || [])
   });
   res.json({ user: publicUser(user), assignment: result });
 });

@@ -1,82 +1,149 @@
-const ZODIAC = [
-  { name: 'Capricorn', start: [12, 22], end: [1, 19] },
-  { name: 'Aquarius', start: [1, 20], end: [2, 18] },
-  { name: 'Pisces', start: [2, 19], end: [3, 20] },
-  { name: 'Aries', start: [3, 21], end: [4, 19] },
-  { name: 'Taurus', start: [4, 20], end: [5, 20] },
-  { name: 'Gemini', start: [5, 21], end: [6, 20] },
-  { name: 'Cancer', start: [6, 21], end: [7, 22] },
-  { name: 'Leo', start: [7, 23], end: [8, 22] },
-  { name: 'Virgo', start: [8, 23], end: [9, 22] },
-  { name: 'Libra', start: [9, 23], end: [10, 22] },
-  { name: 'Scorpio', start: [10, 23], end: [11, 21] },
-  { name: 'Sagittarius', start: [11, 22], end: [12, 21] }
-];
+const zodiacMap = {
+  aries: { name: 'Aries', element: 'fire', dates: [321, 419] },
+  taurus: { name: 'Taurus', element: 'earth', dates: [420, 520] },
+  gemini: { name: 'Gemini', element: 'air', dates: [521, 620] },
+  cancer: { name: 'Cancer', element: 'water', dates: [621, 722] },
+  leo: { name: 'Leo', element: 'fire', dates: [723, 822] },
+  virgo: { name: 'Virgo', element: 'earth', dates: [823, 922] },
+  libra: { name: 'Libra', element: 'air', dates: [923, 1022] },
+  scorpio: { name: 'Scorpio', element: 'water', dates: [1023, 1121] },
+  sagittarius: { name: 'Sagittarius', element: 'fire', dates: [1122, 1221] },
+  capricorn: { name: 'Capricorn', element: 'earth', dates: [1222, 119] },
+  aquarius: { name: 'Aquarius', element: 'air', dates: [120, 218] },
+  pisces: { name: 'Pisces', element: 'water', dates: [219, 320] }
+};
 
-const CASTE_BY_CLIMATE = {
-  tropical: {
-    Aries: 'Pulse', Taurus: 'Deep', Gemini: 'Flow', Cancer: 'Vein',
-    Leo: 'Pulse', Virgo: 'Deep', Libra: 'Flow', Scorpio: 'Vein',
-    Sagittarius: 'Pulse', Capricorn: 'Deep', Aquarius: 'Flow', Pisces: 'Vein'
+const climateElementMap = {
+  desert: 'fire',
+  tropical: 'water',
+  temperate_forest: 'earth',
+  mountain: 'earth',
+  coastal: 'water',
+  tundra: 'air',
+  steppe: 'earth',
+  jungle: 'water',
+  urban: 'fire',
+  river_basin: 'water',
+  wind_swept: 'air',
+  volcanic: 'fire'
+};
+
+const castesByElementAndZodiac = {
+  fire: {
+    aries: { caste: 'Iron Mountain Republic', tribe: 'The Warborn', desc: 'Militant, heat-driven, aggressive expansion' },
+    leo: { caste: 'Iron Mountain Republic', tribe: 'The Furnace', desc: 'Command presence, leadership through dominance' },
+    sagittarius: { caste: 'Digitized Humans', tribe: 'The Flame Carriers', desc: 'Nomadic, data-driven fire prophets' }
   },
-  temperate: {
-    Aries: 'Flow', Taurus: 'Pulse', Gemini: 'Vein', Cancer: 'Deep',
-    Leo: 'Flow', Virgo: 'Pulse', Libra: 'Vein', Scorpio: 'Deep',
-    Sagittarius: 'Flow', Capricorn: 'Pulse', Aquarius: 'Vein', Pisces: 'Deep'
+  water: {
+    cancer: { caste: 'Amnion Clave', tribe: 'The Deep Singers', desc: 'Healing, biological resonance, protective instinct' },
+    scorpio: { caste: 'Tide Clan', tribe: 'The Tide Hunters', desc: 'Secretive, predatory grace, hidden depths' },
+    pisces: { caste: 'Vein-Singers', tribe: 'The Nomad Path', desc: 'Wandering, harmonic resonance, fluid adaptation' }
   },
-  cold: {
-    Aries: 'Deep', Taurus: 'Vein', Gemini: 'Pulse', Cancer: 'Flow',
-    Leo: 'Deep', Virgo: 'Vein', Libra: 'Pulse', Scorpio: 'Flow',
-    Sagittarius: 'Deep', Capricorn: 'Vein', Aquarius: 'Pulse', Pisces: 'Flow'
+  earth: {
+    taurus: { caste: 'Stone Roots', tribe: 'The Steadfast', desc: 'Immovable endurance, deep stability, resource mastery' },
+    virgo: { caste: 'City-Ruins Scavengers', tribe: 'The Salvage Keepers', desc: 'Precision, refitting ancient tech, careful extraction' },
+    capricorn: { caste: 'Bug Swarm Castes', tribe: 'The Brass Collective', desc: 'Hierarchical, pheromonal networks, collective will' }
   },
-  arid: {
-    Aries: 'Vein', Taurus: 'Flow', Gemini: 'Deep', Cancer: 'Pulse',
-    Leo: 'Vein', Virgo: 'Flow', Libra: 'Deep', Scorpio: 'Pulse',
-    Sagittarius: 'Vein', Capricorn: 'Flow', Aquarius: 'Deep', Pisces: 'Pulse'
+  air: {
+    gemini: { caste: 'The Strays', tribe: 'The Signal Runners', desc: 'Swift, information brokers, vertical mastery' },
+    libra: { caste: 'The Climbers', tribe: 'The Canopy Folk', desc: 'Balanced, wind-reading, tree-bound wisdom' },
+    aquarius: { caste: 'The Symbiont Nodes', tribe: 'The Hexa Lineage', desc: 'Distributed consciousness, wireless entities, data drift' }
   }
 };
 
-export function zodiacFromDate(isoDate) {
-  const date = new Date(isoDate);
+const abilities = {
+  'Iron Mountain Republic': ['Heat Resistance', 'Combat Training', 'Authority Command'],
+  'Amnion Clave': ['Biological Resonance', 'Healing Touch', 'Water Affinity'],
+  'Tide Clan': ['Current Reading', 'Predatory Instinct', 'Stealth Movement'],
+  'Vein-Singers': ['Harmonic Resonance', 'Nomadic Navigation', 'Fluid Adaptation'],
+  'Stone Roots': ['Deep Endurance', 'Mineral Reading', 'Root Connection'],
+  'City-Ruins Scavengers': ['Tech Salvage', 'Precision Extraction', 'Ancient Knowledge'],
+  'Bug Swarm Castes': ['Pheromonal Sensing', 'Collective Will', 'Swarm Coordination'],
+  'The Hounds': ['Pack Tactics', 'Heat Tracking', 'Oral Tradition'],
+  'The Strays': ['Signal Hacking', 'Vertical Mastery', 'Information Brokering'],
+  'The Climbers': ['Wind Reading', 'Canopy Navigation', 'Tree Sense'],
+  'The Symbiont Nodes': ['Data Drift', 'Wireless Presence', 'Distributed Consciousness'],
+  'The Void-Born': ['Orbital Awareness', 'Augmented Precision', 'Cold Logic'],
+  'The Scrappers': ['Implant Repair', 'Tech Jury-Rig', 'Salvage Sense'],
+  'Digitized Humans': ['Data Upload', 'Core Processing', 'Consciousness Transfer']
+};
+
+export function getZodiacSign(birthDate) {
+  const date = new Date(birthDate);
   if (Number.isNaN(date.getTime())) return null;
   const month = date.getUTCMonth() + 1;
   const day = date.getUTCDate();
+  const mmdd = month * 100 + day;
 
-  for (const sign of ZODIAC) {
-    const [startMonth, startDay] = sign.start;
-    const [endMonth, endDay] = sign.end;
-    const afterStart = month > startMonth || (month === startMonth && day >= startDay);
-    const beforeEnd = month < endMonth || (month === endMonth && day <= endDay);
-    if (startMonth > endMonth) {
-      if (afterStart || beforeEnd) return sign.name;
-    } else if (afterStart && beforeEnd) {
-      return sign.name;
+  for (const [sign, info] of Object.entries(zodiacMap)) {
+    const [start, end] = info.dates;
+    if (start <= end) {
+      if (mmdd >= start && mmdd <= end) return sign;
+    } else if (mmdd >= start || mmdd <= end) {
+      return sign;
     }
   }
   return null;
 }
 
-export function climateFromLocation({ latitude, longitude }) {
-  const lat = Number(latitude);
-  if (!Number.isFinite(lat)) return 'temperate';
-  const abs = Math.abs(lat);
-  if (abs < 23.5) return 'tropical';
-  if (abs < 45) return 'temperate';
-  if (abs < 66) return 'cold';
-  return 'cold';
+export function getClimateFromCoords(lat, lon) {
+  const absLat = Math.abs(Number(lat));
+  const longitude = Number(lon);
+  if (!Number.isFinite(absLat)) return 'temperate_forest';
+
+  if (absLat > 66.5) return 'tundra';
+  if (absLat > 55) {
+    if (longitude > -180 && longitude < -60) return 'mountain';
+    return 'temperate_forest';
+  }
+  if (absLat > 35) {
+    if (Math.abs(longitude - -74) < 20) return 'urban';
+    if (Math.abs(longitude - -120) < 15) return 'mountain';
+    if (Math.abs(longitude - 0) < 30 && absLat < 45) return 'temperate_forest';
+    return 'steppe';
+  }
+  if (absLat > 23.5) {
+    if (longitude > 95 && longitude < 105) return 'tropical';
+    if (longitude > 70 && longitude < 90) return 'jungle';
+    return 'desert';
+  }
+  if (longitude > 30 && longitude < 60) return 'jungle';
+  if (longitude > 140 || longitude < -120) return 'tropical';
+  if (longitude > 10 && longitude < 35) return 'tropical';
+  return 'tropical';
 }
 
 export function assignCaste({ birthDate, latitude, longitude }) {
-  const zodiac = zodiacFromDate(birthDate);
-  const climate = climateFromLocation({ latitude, longitude });
-  if (!zodiac) {
-    return { zodiac: null, climate, caste: null, note: 'Birth date is required.' };
+  const zodiac = getZodiacSign(birthDate);
+  const climate = getClimateFromCoords(latitude, longitude);
+  const element = climateElementMap[climate] || 'earth';
+  const match = (zodiac && castesByElementAndZodiac[element]?.[zodiac]) || null;
+
+  if (!zodiac || !match) {
+    return {
+      zodiac: zodiac ? zodiacMap[zodiac].name : null,
+      climate,
+      element,
+      caste: null,
+      tribe: null,
+      description: null,
+      abilities: [],
+      note: 'Birth date is required. No fallback caste.'
+    };
   }
-  const table = CASTE_BY_CLIMATE[climate] || CASTE_BY_CLIMATE.temperate;
+
   return {
-    zodiac,
+    zodiac: zodiacMap[zodiac].name,
     climate,
-    caste: table[zodiac],
-    note: 'First-pass map. Not final canon.'
+    element,
+    caste: match.caste,
+    tribe: match.tribe,
+    description: match.desc,
+    abilities: abilities[match.caste] || ['Survival', 'Learning', 'Adaptation'],
+    note: 'Assigned from zodiac and climate element.'
   };
+}
+
+export function getStartingAbilities(caste) {
+  return abilities[caste] || ['Survival', 'Learning', 'Adaptation'];
 }

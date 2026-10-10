@@ -29,12 +29,28 @@ db.exec(`
     latitude REAL,
     longitude REAL,
     climate TEXT,
+    element TEXT,
     zodiac TEXT,
     caste TEXT,
+    tribe TEXT,
+    description TEXT,
+    abilities TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+function ensureColumn(name, type) {
+  const columns = db.prepare('PRAGMA table_info(users)').all();
+  if (!columns.some((column) => column.name === name)) {
+    db.exec(`ALTER TABLE users ADD COLUMN ${name} ${type}`);
+  }
+}
+
+ensureColumn('element', 'TEXT');
+ensureColumn('tribe', 'TEXT');
+ensureColumn('description', 'TEXT');
+ensureColumn('abilities', 'TEXT');
 
 export function findUserByEmail(email) {
   const normalized = String(email || '').trim().toLowerCase();
@@ -57,7 +73,8 @@ export function createUser({ name, email, passwordHash, provider = 'local' }) {
 export function updateUserById(id, updates) {
   const allowed = new Set([
     'name', 'email', 'password_hash', 'provider', 'google_id', 'github_id',
-    'github_login', 'birth_date', 'latitude', 'longitude', 'climate', 'zodiac', 'caste'
+    'github_login', 'birth_date', 'latitude', 'longitude', 'climate', 'element',
+    'zodiac', 'caste', 'tribe', 'description', 'abilities'
   ]);
   const fields = [];
   const values = [];
@@ -86,8 +103,12 @@ export function publicUser(user) {
     githubLogin: user.github_login,
     birthDate: user.birth_date,
     climate: user.climate,
+    element: user.element,
     zodiac: user.zodiac,
-    caste: user.caste
+    caste: user.caste,
+    tribe: user.tribe,
+    description: user.description,
+    abilities: user.abilities ? JSON.parse(user.abilities) : []
   };
 }
 
