@@ -18,7 +18,7 @@ import db, {
 } from './db.js';
 import { assignCaste } from './caste-logic.js';
 import BitChatService, { getBitChatStatus, toggleBitChat } from './bitchat-service.js';
-import { abilitiesFromRepos, listUserRepos } from './github-service.js';
+import { getAbilityUnlock, searchRepos } from './github-service.js';
 
 dotenv.config();
 
@@ -99,7 +99,8 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
   if (!user) return res.status(401).json({ message: 'User not found.' });
   res.json({
     user: publicUser(user),
-    character: getCharacterByUserId(user.id)
+    character: getCharacterByUserId(user.id),
+    repos: getUserRepos(user.id)
   });
 });
 
@@ -198,21 +199,29 @@ app.get('/api/bitchat/group/:id', requireAuth, (req, res) => {
   res.json({ messages });
 });
 
-app.get('/api/github/abilities', requireAuth, async (req, res) => {
+app.get('/api/github/search', requireAuth, async (req, res) => {
+  const query = String(req.query.q || '').trim();
+  if (!query) return res.status(400).json({ message: 'Query is required.' });
   const user = findUserById(req.session.userId);
-  const login = req.query.login || user?.github_id;
-  const result = await listUserRepos(login);
-  const character = getCharacterByUserId(user.id);
-  if (result.ok && character) {
-    for (const repo of result.repos) {
-      saveRepo(user.id, character.id, repo.name, `https://github.com/${login}/${repo.name}`, login, null);
-    }
+  const token = user?.github_token || process.env.GITHUB_API_TOKEN;
+  const repos = await searchRepos(query, token);
+  const withUnlocks = repos.map((repo) => ({
+    ...repo,
+    ability: getAbilityUnlock(repo.name, repo.language)
+  }));
+  res.json({ repos: withUnlocks });
+});
+
+app.post('/api/github/save', requireAuth, (req, res) => {
+  const { name, url, owner, language } = req.body || {};
+  if (!name || !url || !owner) {
+    return res.status(400).json({ message: 'Repo name, url, and owner are required.' });
   }
-  res.json({
-    ...result,
-    unlocks: abilitiesFromRepos(result.repos),
-    saved: getUserRepos(user.id)
-  });
+  const character = getCharacterByUserId(req.session.userId);
+  if (!character) return res.status(400).json({ message: 'Create a character first.' });
+  const ability = getAbilityUnlock(name, language);
+  saveRepo(req.session.userId, character.id, name, url, owner, ability);
+  res.status(201).json({ ability, repos: getUserRepos(req.session.userId) });
 });
 
 app.listen(PORT, () => {
