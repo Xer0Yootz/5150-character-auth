@@ -18,7 +18,7 @@ export default function App() {
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(8);
-  const [label, setLabel] = useState('Hex operating system loading');
+  const [label, setLabel] = useState('Entering virtual reality construct');
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +27,7 @@ export default function App() {
     async function load() {
       try {
         setProgress(20);
-        setLabel('Logging in to the IWW');
+        setLabel('Entering virtual reality construct');
         const authResponse = await fetch('/api/auth/me', { credentials: 'include' });
         if (cancelled) return;
         setProgress(55);
@@ -40,7 +40,7 @@ export default function App() {
           const data = await authResponse.json();
           setUser(data.user);
           setProgress(70);
-          setLabel('Reading the local node');
+          setLabel('Logging in to the IWW');
 
           const characterResponse = await fetch('/api/character/me', { credentials: 'include' });
           if (cancelled) return;
