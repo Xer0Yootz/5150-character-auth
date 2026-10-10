@@ -41,6 +41,7 @@ db.exec(`
     tribe TEXT,
     abilities TEXT,
     github_upgrades TEXT DEFAULT '[]',
+    model_url TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
@@ -89,6 +90,12 @@ db.exec(`
   );
 `);
 
+try {
+  db.exec('ALTER TABLE characters ADD COLUMN model_url TEXT');
+} catch {
+  // column already present
+}
+
 export function findUserByEmail(email) {
   return db.prepare('SELECT * FROM users WHERE email = ?').get(String(email).toLowerCase()) || null;
 }
@@ -121,17 +128,17 @@ export function updateUser(id, updates) {
 
 export function createCharacter({
   userId, codename, birthday, location, latitude, longitude,
-  zodiac, climate, element, caste, tribe, abilities
+  zodiac, climate, element, caste, tribe, abilities, modelUrl = null
 }) {
   const id = `char_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   db.prepare(`
     INSERT INTO characters (
       id, user_id, codename, birthday, location, latitude, longitude,
-      zodiac, climate, element, caste, tribe, abilities
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      zodiac, climate, element, caste, tribe, abilities, model_url
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, userId, codename, birthday, location, latitude, longitude,
-    zodiac, climate, element, caste, tribe, JSON.stringify(abilities || [])
+    zodiac, climate, element, caste, tribe, JSON.stringify(abilities || []), modelUrl
   );
   return getCharacterById(id);
 }
@@ -141,6 +148,7 @@ export function getCharacterById(id) {
   if (!character) return null;
   character.abilities = JSON.parse(character.abilities || '[]');
   character.github_upgrades = JSON.parse(character.github_upgrades || '[]');
+  character.modelUrl = character.model_url || null;
   return character;
 }
 
@@ -149,6 +157,7 @@ export function getCharacterByUserId(userId) {
   if (!character) return null;
   character.abilities = JSON.parse(character.abilities || '[]');
   character.github_upgrades = JSON.parse(character.github_upgrades || '[]');
+  character.modelUrl = character.model_url || null;
   return character;
 }
 

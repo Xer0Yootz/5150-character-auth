@@ -161,7 +161,7 @@ app.get('/api/auth/me', (req, res) => {
 app.post('/api/character/create', (req, res) => {
   if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
 
-  const { codename, birthday, location, latitude, longitude } = req.body || {};
+  const { codename, birthday, location, latitude, longitude, modelUrl } = req.body || {};
   if (!codename || !birthday || !location || latitude === undefined || longitude === undefined) {
     return res.status(400).json({ message: 'Missing character fields.' });
   }
@@ -180,7 +180,8 @@ app.post('/api/character/create', (req, res) => {
     element: casteData.element,
     caste: casteData.caste,
     tribe: casteData.tribe,
-    abilities
+    abilities,
+    modelUrl: modelUrl || null
   });
 
   res.json({ character });
