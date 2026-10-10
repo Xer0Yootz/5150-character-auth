@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import GroupChatPage from './pages/GroupChatPage.jsx';
 
 const MIN_INTRO_MS = 1800;
+const LOADED_HOLD_MS = 700;
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -18,7 +19,7 @@ export default function App() {
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(8);
-  const [label, setLabel] = useState('Entering virtual reality construct');
+  const [label, setLabel] = useState('Hex operating system loading');
 
   useEffect(() => {
     let cancelled = false;
@@ -27,14 +28,14 @@ export default function App() {
     async function load() {
       try {
         setProgress(20);
-        setLabel('Entering virtual reality construct');
+        setLabel('Hex operating system loading');
         const authResponse = await fetch('/api/auth/me', { credentials: 'include' });
         if (cancelled) return;
         setProgress(55);
 
         if (!authResponse.ok) {
           setUser(null);
-          setProgress(100);
+          setProgress(90);
           setLabel('No IWW session');
         } else {
           const data = await authResponse.json();
@@ -49,22 +50,23 @@ export default function App() {
           if (characterResponse.ok) {
             const characterData = await characterResponse.json();
             setCharacter(characterData.character || null);
-            setLabel(characterData.character ? 'Node read' : 'No character on this node');
           } else {
             setCharacter(null);
-            setLabel('No character on this node');
           }
-          setProgress(100);
         }
       } catch {
         if (!cancelled) {
           setUser(null);
-          setProgress(100);
+          setProgress(90);
           setLabel('IWW read failed');
         }
       } finally {
+        if (!cancelled) {
+          setProgress(100);
+          setLabel('Entering virtual reality construct');
+        }
         const elapsed = Date.now() - started;
-        const remaining = Math.max(0, MIN_INTRO_MS - elapsed);
+        const remaining = Math.max(LOADED_HOLD_MS, MIN_INTRO_MS - elapsed);
         await wait(remaining);
         if (!cancelled) setLoading(false);
       }
