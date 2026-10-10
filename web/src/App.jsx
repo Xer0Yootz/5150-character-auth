@@ -11,25 +11,64 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(8);
+  const [label, setLabel] = useState('Reading the session…');
 
   useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.user) {
-          setUser(data.user);
-          return fetch('/api/character/me', { credentials: 'include' })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((c) => setCharacter(c?.character || null));
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setProgress(20);
+        setLabel('Checking the session…');
+        const authResponse = await fetch('/api/auth/me', { credentials: 'include' });
+        if (cancelled) return;
+        setProgress(55);
+
+        if (!authResponse.ok) {
+          setUser(null);
+          setProgress(100);
+          setLabel('No session.');
+          return;
         }
-        setUser(null);
-      })
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+
+        const data = await authResponse.json();
+        setUser(data.user);
+        setProgress(70);
+        setLabel('Your caste is being chosen…');
+
+        const characterResponse = await fetch('/api/character/me', { credentials: 'include' });
+        if (cancelled) return;
+        setProgress(90);
+
+        if (characterResponse.ok) {
+          const characterData = await characterResponse.json();
+          setCharacter(characterData.character || null);
+          setLabel(characterData.character ? 'Caste found.' : 'No caste yet.');
+        } else {
+          setCharacter(null);
+          setLabel('No caste yet.');
+        }
+        setProgress(100);
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+          setProgress(100);
+          setLabel('Session read failed.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {
-    return <LoadingScreen />;
+    return <LoadingScreen progress={progress} label={label} />;
   }
 
   return (
