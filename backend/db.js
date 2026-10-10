@@ -38,6 +38,37 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS bitchat_keys (
+    user_id TEXT PRIMARY KEY,
+    public_key TEXT NOT NULL,
+    secret_key TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS bitchat_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    creator_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS bitchat_group_members (
+    group_id TEXT NOT NULL,
+    member_id TEXT NOT NULL,
+    PRIMARY KEY (group_id, member_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS bitchat_messages (
+    id TEXT PRIMARY KEY,
+    sender_id TEXT NOT NULL,
+    sender_name TEXT,
+    recipient_id TEXT,
+    ciphertext TEXT NOT NULL,
+    nonce TEXT NOT NULL,
+    group_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 function ensureColumn(name, type) {

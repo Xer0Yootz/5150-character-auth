@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import geoip from 'geoip-lite';
-import {
+import db, {
   comparePassword,
   createUser,
   findUserByEmail,
@@ -14,7 +14,7 @@ import {
   updateUserById
 } from './db.js';
 import { assignCaste } from './caste-logic.js';
-import { getBitChatStatus, toggleBitChat } from './bitchat-service.js';
+import BitChatService, { getBitChatStatus, toggleBitChat } from './bitchat-service.js';
 import { abilitiesFromRepos, listUserRepos } from './github-service.js';
 
 dotenv.config();
@@ -22,6 +22,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const bitChat = new BitChatService(db);
 
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json());
@@ -125,6 +126,63 @@ app.get('/api/bitchat/status', requireAuth, async (req, res) => {
 app.post('/api/bitchat/connect', requireAuth, async (req, res) => {
   const { enabled } = req.body || {};
   res.json({ status: await toggleBitChat(Boolean(enabled)) });
+});
+
+app.post('/api/bitchat/keypair', requireAuth, (req, res) => {
+  const keys = bitChat.generateKeypair();
+  bitChat.saveKeypair(req.session.userId, keys.publicKey, keys.secretKey);
+  res.json({ publicKey: keys.publicKey });
+});
+
+app.post('/api/bitchat/group', requireAuth, (req, res) => {
+  const { name, members } = req.body || {};
+  if (!name) return res.status(400).json({ message: 'Group name is required.' });
+  const groupId = bitChat.createGroupChat(name, req.session.userId, Array.isArray(members) ? members : []);
+  res.status(201).json({ groupId });
+});
+
+app.post('/api/bitchat/message', requireAuth, (req, res) => {
+  const { recipientId, groupId, message } = req.body || {};
+  if (!message || (!recipientId && !groupId)) {
+    return res.status(400).json({ message: 'Message and a recipient or group are required.' });
+  }
+  const sender = findUserById(req.session.userId);
+  const senderKeys = bitChat.getKeypair(req.session.userId);
+  const targetId = recipientId || groupId;
+  const targetKeys = bitChat.getKeypair(recipientId || req.session.userId);
+  if (!senderKeys || !targetKeys) {
+    return res.status(400).json({ message: 'Both sides need a keypair first.' });
+  }
+  const encrypted = bitChat.encryptMessage(senderKeys.secret_key, targetKeys.public_key, message);
+  if (!encrypted) return res.status(400).json({ message: 'Encrypt failed.' });
+  const id = bitChat.saveMessage(
+    sender.id,
+    sender.name,
+    recipientId || null,
+    encrypted.ciphertext,
+    encrypted.nonce,
+    groupId || null
+  );
+  res.status(201).json({ id, ...encrypted });
+});
+
+app.get('/api/bitchat/group/:id', requireAuth, (req, res) => {
+  const rows = bitChat.getGroupMessages(req.params.id);
+  const senderKeys = bitChat.getKeypair(req.session.userId);
+  const messages = rows.map((row) => {
+    const senderKey = bitChat.getKeypair(row.sender_id);
+    const text = senderKeys && senderKey
+      ? bitChat.decryptMessage(senderKeys.secret_key, senderKey.public_key, row.ciphertext, row.nonce)
+      : null;
+    return {
+      id: row.id,
+      senderId: row.sender_id,
+      senderName: row.sender_name,
+      text,
+      createdAt: row.created_at
+    };
+  });
+  res.json({ messages });
 });
 
 app.get('/api/github/abilities', requireAuth, async (req, res) => {
