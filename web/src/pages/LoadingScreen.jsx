@@ -11,7 +11,7 @@ export default function LoadingScreen() {
           <div className="loading-progress"></div>
         </div>
 
-        <p className="loading-text">Your cast is being chosen…</p>
+        <p className="loading-text">Your caste is being chosen…</p>
       </div>
     </main>
   );
