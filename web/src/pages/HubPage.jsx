@@ -1,9 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Icon } from '../icons.jsx';
-import ModelViewer from '../components/ModelViewer.jsx';
+import WorldViewer from '../components/WorldViewer.jsx';
 
 export default function HubPage({ user, character, setUser }) {
   const navigate = useNavigate();
+  const [lightsOn, setLightsOn] = useState(() => {
+    const saved = localStorage.getItem('5150-lights');
+    return saved === null ? true : saved === 'on';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('5150-lights', lightsOn ? 'on' : 'off');
+  }, [lightsOn]);
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
@@ -20,7 +29,28 @@ export default function HubPage({ user, character, setUser }) {
           <p className="hub-meta">{character?.caste} / {character?.tribe}</p>
         </div>
 
-        <ModelViewer modelUrl={character?.modelUrl} height={240} />
+        <div style={{ position: 'relative' }}>
+          <WorldViewer
+            modelUrl={character?.modelUrl}
+            worldUrl={character?.worldUrl}
+            caste={character?.caste}
+            height={280}
+            lightsOn={lightsOn}
+          />
+          <button
+            type="button"
+            className="lights-bulb"
+            onClick={() => setLightsOn((v) => !v)}
+            aria-label={lightsOn ? 'Turn off the lights' : 'Turn on the lights'}
+            style={{ position: 'absolute', top: 8, right: 8 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+              <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
+            </svg>
+          </button>
+        </div>
 
         <nav className="hub-actions">
           <Link className="btn primary" to="/chat"><Icon name="chat" /> Chat</Link>
