@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import nacl from 'tweetnacl';
 import { v4 as uuidv4 } from 'uuid';
+import { findUserById, updateUser } from './db.js';
 
 dotenv.config();
 
@@ -14,8 +15,8 @@ export const bitchatConfig = {
 };
 
 export class BitChatService {
-  constructor(db) {
-    this.db = db;
+  constructor(database) {
+    this.db = database;
   }
 
   generateKeypair() {
@@ -50,18 +51,20 @@ export class BitChatService {
   }
 
   saveKeypair(userId, publicKey, secretKey) {
-    this.db.prepare(`
-      INSERT INTO bitchat_keys (user_id, public_key, secret_key, created_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(user_id) DO UPDATE SET
-        public_key = excluded.public_key,
-        secret_key = excluded.secret_key,
-        created_at = CURRENT_TIMESTAMP
-    `).run(userId, publicKey, secretKey);
+    updateUser(userId, {
+      bitchat_public_key: publicKey,
+      bitchat_secret_key: secretKey
+    });
   }
 
   getKeypair(userId) {
-    return this.db.prepare('SELECT * FROM bitchat_keys WHERE user_id = ?').get(userId) || null;
+    const user = findUserById(userId);
+    if (!user?.bitchat_public_key || !user?.bitchat_secret_key) return null;
+    return {
+      user_id: userId,
+      public_key: user.bitchat_public_key,
+      secret_key: user.bitchat_secret_key
+    };
   }
 
   saveMessage(senderId, senderName, recipientId, ciphertext, nonce, groupId = null) {
@@ -92,9 +95,9 @@ export class BitChatService {
     const uniqueMembers = new Set([creatorId, ...members]);
     for (const memberId of uniqueMembers) {
       this.db.prepare(`
-        INSERT OR IGNORE INTO bitchat_group_members (group_id, member_id)
-        VALUES (?, ?)
-      `).run(id, memberId);
+        INSERT INTO bitchat_group_members (id, group_id, member_id)
+        VALUES (?, ?, ?)
+      `).run(uuidv4(), id, memberId);
     }
     return id;
   }

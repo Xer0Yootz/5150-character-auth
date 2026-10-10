@@ -6,12 +6,15 @@ import cookieParser from 'cookie-parser';
 import geoip from 'geoip-lite';
 import db, {
   comparePassword,
+  createCharacter,
   createUser,
   findUserByEmail,
   findUserById,
+  getCharacterByUserId,
+  getUserRepos,
   hashPassword,
   publicUser,
-  updateUserById
+  saveRepo
 } from './db.js';
 import { assignCaste } from './caste-logic.js';
 import BitChatService, { getBitChatStatus, toggleBitChat } from './bitchat-service.js';
@@ -94,29 +97,40 @@ app.post('/api/auth/logout', (req, res) => {
 app.get('/api/auth/me', requireAuth, (req, res) => {
   const user = findUserById(req.session.userId);
   if (!user) return res.status(401).json({ message: 'User not found.' });
-  res.json({ user: publicUser(user) });
+  res.json({
+    user: publicUser(user),
+    character: getCharacterByUserId(user.id)
+  });
 });
 
 app.post('/api/character/assign', requireAuth, (req, res) => {
-  const { birthDate, latitude, longitude } = req.body || {};
+  const { codename, birthday, location, latitude, longitude } = req.body || {};
+  if (!codename || !birthday || !location) {
+    return res.status(400).json({ message: 'Codename, birthday, and location are required.' });
+  }
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
   const lookup = geoip.lookup(ip);
   const lat = latitude ?? lookup?.ll?.[0];
   const lon = longitude ?? lookup?.ll?.[1];
-  const result = assignCaste(birthDate, lat, lon);
-  const user = updateUserById(req.session.userId, {
-    birth_date: birthDate || null,
-    latitude: lat ?? null,
-    longitude: lon ?? null,
+  if (lat == null || lon == null) {
+    return res.status(400).json({ message: 'Latitude and longitude are required.' });
+  }
+  const result = assignCaste(birthday, lat, lon);
+  const character = createCharacter({
+    userId: req.session.userId,
+    codename,
+    birthday,
+    location,
+    latitude: lat,
+    longitude: lon,
+    zodiac: result.zodiac,
     climate: result.climate,
     element: result.element,
-    zodiac: result.zodiac,
     caste: result.caste,
     tribe: result.tribe,
-    description: result.description,
-    abilities: JSON.stringify(result.abilities || [])
+    abilities: result.abilities
   });
-  res.json({ user: publicUser(user), assignment: result });
+  res.status(201).json({ character, assignment: result });
 });
 
 app.get('/api/bitchat/status', requireAuth, async (req, res) => {
@@ -148,7 +162,6 @@ app.post('/api/bitchat/message', requireAuth, (req, res) => {
   }
   const sender = findUserById(req.session.userId);
   const senderKeys = bitChat.getKeypair(req.session.userId);
-  const targetId = recipientId || groupId;
   const targetKeys = bitChat.getKeypair(recipientId || req.session.userId);
   if (!senderKeys || !targetKeys) {
     return res.status(400).json({ message: 'Both sides need a keypair first.' });
@@ -168,11 +181,11 @@ app.post('/api/bitchat/message', requireAuth, (req, res) => {
 
 app.get('/api/bitchat/group/:id', requireAuth, (req, res) => {
   const rows = bitChat.getGroupMessages(req.params.id);
-  const senderKeys = bitChat.getKeypair(req.session.userId);
+  const viewerKeys = bitChat.getKeypair(req.session.userId);
   const messages = rows.map((row) => {
     const senderKey = bitChat.getKeypair(row.sender_id);
-    const text = senderKeys && senderKey
-      ? bitChat.decryptMessage(senderKeys.secret_key, senderKey.public_key, row.ciphertext, row.nonce)
+    const text = viewerKeys && senderKey
+      ? bitChat.decryptMessage(viewerKeys.secret_key, senderKey.public_key, row.ciphertext, row.nonce)
       : null;
     return {
       id: row.id,
@@ -187,9 +200,19 @@ app.get('/api/bitchat/group/:id', requireAuth, (req, res) => {
 
 app.get('/api/github/abilities', requireAuth, async (req, res) => {
   const user = findUserById(req.session.userId);
-  const login = req.query.login || user?.github_login;
+  const login = req.query.login || user?.github_id;
   const result = await listUserRepos(login);
-  res.json({ ...result, unlocks: abilitiesFromRepos(result.repos) });
+  const character = getCharacterByUserId(user.id);
+  if (result.ok && character) {
+    for (const repo of result.repos) {
+      saveRepo(user.id, character.id, repo.name, `https://github.com/${login}/${repo.name}`, login, null);
+    }
+  }
+  res.json({
+    ...result,
+    unlocks: abilitiesFromRepos(result.repos),
+    saved: getUserRepos(user.id)
+  });
 });
 
 app.listen(PORT, () => {
