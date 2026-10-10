@@ -43,6 +43,9 @@ a { color: #9ad7ff; }
 .hub-actions { display: grid; gap: 10px; margin-top: 18px; }
 .model-viewer { width: 100%; margin: 12px 0; border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 0, 0, 0.35); overflow: hidden; position: relative; }
 .model-viewer canvas { display: block; width: 100%; height: 100%; }
+.view-modes { display: flex; gap: 6px; margin: 8px 0; }
+.mode-btn { font: inherit; font-size: 11px; padding: 4px 8px; border: 1px solid rgba(0,240,255,0.3); background: transparent; color: #00f0ff; cursor: pointer; }
+.mode-btn.active { background: #c300ff; color: #000; border-color: #c300ff; }
 .lights-bulb {
   width: 28px;
   height: 28px;

@@ -3,16 +3,27 @@ import { useState, useEffect } from 'react';
 import { Icon } from '../icons.jsx';
 import WorldViewer from '../components/WorldViewer.jsx';
 
+const MODES = [
+  { id: 'procedural', label: 'Procedural' },
+  { id: 'skybox', label: 'Skybox' },
+  { id: 'plate', label: 'Plate' }
+];
+
 export default function HubPage({ user, character, setUser }) {
   const navigate = useNavigate();
   const [lightsOn, setLightsOn] = useState(() => {
     const saved = localStorage.getItem('5150-lights');
     return saved === null ? true : saved === 'on';
   });
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('5150-view') || 'procedural');
 
   useEffect(() => {
     localStorage.setItem('5150-lights', lightsOn ? 'on' : 'off');
   }, [lightsOn]);
+
+  useEffect(() => {
+    localStorage.setItem('5150-view', viewMode);
+  }, [viewMode]);
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
@@ -29,11 +40,25 @@ export default function HubPage({ user, character, setUser }) {
           <p className="hub-meta">{character?.caste} / {character?.tribe}</p>
         </div>
 
+        <div className="view-modes">
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className={viewMode === m.id ? 'mode-btn active' : 'mode-btn'}
+              onClick={() => setViewMode(m.id)}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
         <div style={{ position: 'relative' }}>
           <WorldViewer
             modelUrl={character?.modelUrl}
             worldUrl={character?.worldUrl}
-            caste={character?.caste}
+            viewMode={viewMode}
+            plateUrl={character?.plateUrl || '/garden-shore.jpg'}
             height={280}
             lightsOn={lightsOn}
           />
