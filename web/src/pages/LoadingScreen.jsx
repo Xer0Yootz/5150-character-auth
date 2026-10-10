@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 const LINES = [
-  'Session first. Caste second.',
-  'The bar is the real call, not a loop.',
-  'Skip if you already know.'
+  'Hex operating system loading',
+  'Logging in to the IWW',
+  'Reading the local node',
+  'Holding the line'
 ];
 
 function HexOsMark() {
@@ -23,7 +24,7 @@ function HexOsMark() {
   );
 }
 
-export default function LoadingScreen({ progress = 0, label = 'Reading the session…', onSkip }) {
+export default function LoadingScreen({ progress = 0, label = 'Hex operating system loading', onSkip }) {
   const [lineIndex, setLineIndex] = useState(0);
   const width = Math.max(0, Math.min(100, progress));
 

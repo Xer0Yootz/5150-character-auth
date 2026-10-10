@@ -18,7 +18,7 @@ export default function App() {
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(8);
-  const [label, setLabel] = useState('Reading the session…');
+  const [label, setLabel] = useState('Hex operating system loading');
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +27,7 @@ export default function App() {
     async function load() {
       try {
         setProgress(20);
-        setLabel('Checking the session…');
+        setLabel('Logging in to the IWW');
         const authResponse = await fetch('/api/auth/me', { credentials: 'include' });
         if (cancelled) return;
         setProgress(55);
@@ -35,12 +35,12 @@ export default function App() {
         if (!authResponse.ok) {
           setUser(null);
           setProgress(100);
-          setLabel('No session.');
+          setLabel('No IWW session');
         } else {
           const data = await authResponse.json();
           setUser(data.user);
           setProgress(70);
-          setLabel('Your caste is being chosen…');
+          setLabel('Reading the local node');
 
           const characterResponse = await fetch('/api/character/me', { credentials: 'include' });
           if (cancelled) return;
@@ -49,10 +49,10 @@ export default function App() {
           if (characterResponse.ok) {
             const characterData = await characterResponse.json();
             setCharacter(characterData.character || null);
-            setLabel(characterData.character ? 'Caste found.' : 'No caste yet.');
+            setLabel(characterData.character ? 'Node read' : 'No character on this node');
           } else {
             setCharacter(null);
-            setLabel('No caste yet.');
+            setLabel('No character on this node');
           }
           setProgress(100);
         }
@@ -60,7 +60,7 @@ export default function App() {
         if (!cancelled) {
           setUser(null);
           setProgress(100);
-          setLabel('Session read failed.');
+          setLabel('IWW read failed');
         }
       } finally {
         const elapsed = Date.now() - started;
