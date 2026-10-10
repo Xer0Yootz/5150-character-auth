@@ -1,0 +1,40 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #0d0d12;
+  color: #f2f2f2;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+form, .panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+}
+
+input, button {
+  font: inherit;
+  padding: 10px 12px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.error {
+  color: #ff8a8a;
+}
+
+a {
+  color: #9ad7ff;
+}
