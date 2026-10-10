@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_URL } from '../App.jsx';
 
-export default function LoginPage({ onUserChange }) {
+export default function LoginPage({ setUser }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -13,7 +12,7 @@ export default function LoginPage({ onUserChange }) {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -21,8 +20,8 @@ export default function LoginPage({ onUserChange }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Login failed');
-      onUserChange(data.user);
-      navigate('/dashboard');
+      setUser(data.user);
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -39,8 +38,8 @@ export default function LoginPage({ onUserChange }) {
         {error && <p className="error">{error}</p>}
         <button type="submit" disabled={loading}>{loading ? 'Logging in' : 'Log in'}</button>
       </form>
-      <p><a href={`${API_URL}/auth/google`}>Continue with Google</a></p>
-      <p><a href={`${API_URL}/auth/github`}>Continue with GitHub</a></p>
+      <p><a href="/auth/google">Continue with Google</a></p>
+      <p><a href="/auth/github">Continue with GitHub</a></p>
       <p>Need an account? <Link to="/signup">Sign up</Link></p>
     </main>
   );

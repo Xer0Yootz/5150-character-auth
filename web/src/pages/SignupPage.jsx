@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_URL } from '../App.jsx';
 
-export default function SignupPage({ onUserChange }) {
+export default function SignupPage({ setUser }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -11,7 +10,7 @@ export default function SignupPage({ onUserChange }) {
     event.preventDefault();
     setError('');
     try {
-      const response = await fetch(`${API_URL}/api/auth/signup`, {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -19,8 +18,8 @@ export default function SignupPage({ onUserChange }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Signup failed');
-      onUserChange(data.user);
-      navigate('/character');
+      setUser(data.user);
+      navigate('/');
     } catch (err) {
       setError(err.message);
     }

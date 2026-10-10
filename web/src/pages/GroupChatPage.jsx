@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../App.jsx';
 
-export default function GroupChatPage({ user }) {
+export default function GroupChatPage({ user, character }) {
   const [groups, setGroups] = useState([]);
   const [groupId, setGroupId] = useState('');
   const [messages, setMessages] = useState([]);
@@ -11,8 +10,8 @@ export default function GroupChatPage({ user }) {
 
   useEffect(() => {
     async function load() {
-      await fetch(`${API_URL}/api/bitchat/keypair`, { credentials: 'include' });
-      const response = await fetch(`${API_URL}/api/bitchat/groups`, { credentials: 'include' });
+      await fetch('/api/bitchat/keypair', { credentials: 'include' });
+      const response = await fetch('/api/bitchat/groups', { credentials: 'include' });
       const data = await response.json();
       setGroups(data.groups || []);
     }
@@ -21,7 +20,7 @@ export default function GroupChatPage({ user }) {
 
   const loadMessages = async (id) => {
     setGroupId(id);
-    const response = await fetch(`${API_URL}/api/bitchat/messages/${id}`, { credentials: 'include' });
+    const response = await fetch(`/api/bitchat/messages/${id}`, { credentials: 'include' });
     const data = await response.json();
     setMessages(data.messages || []);
   };
@@ -33,7 +32,7 @@ export default function GroupChatPage({ user }) {
       setError('Pick a group first.');
       return;
     }
-    const response = await fetch(`${API_URL}/api/bitchat/send`, {
+    const response = await fetch('/api/bitchat/send', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -54,7 +53,7 @@ export default function GroupChatPage({ user }) {
   return (
     <main>
       <h1>Chat</h1>
-      <p>{user.name}</p>
+      <p>{user.name} / {character.codename}</p>
       <p><Link to="/dashboard">Back</Link></p>
       {groups.map((group) => (
         <button key={group.id} type="button" onClick={() => loadMessages(group.id)}>{group.name}</button>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LoadingScreen from './pages/LoadingScreen.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
@@ -7,40 +7,38 @@ import CharacterCreation from './pages/CharacterCreation.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import GroupChatPage from './pages/GroupChatPage.jsx';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
 export default function App() {
   const [user, setUser] = useState(null);
+  const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const response = await fetch(`${API_URL}/api/auth/me`, { credentials: 'include' });
-        if (!response.ok) {
-          setUser(null);
-          return;
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          setUser(data.user);
+          return fetch('/api/character/me', { credentials: 'include' })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((c) => setCharacter(c?.character || null));
         }
-        const data = await response.json();
-        setUser(data.user);
-      } catch {
         setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadUser();
+      })
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <LoadingScreen />;
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <Routes>
-      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage onUserChange={setUser} />} />
-      <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <SignupPage onUserChange={setUser} />} />
-      <Route path="/character" element={user ? <CharacterCreation /> : <Navigate to="/" replace />} />
-      <Route path="/dashboard" element={user ? <DashboardPage user={user} onUserChange={setUser} /> : <Navigate to="/" replace />} />
-      <Route path="/chat" element={user ? <GroupChatPage user={user} /> : <Navigate to="/" replace />} />
+      <Route path="/" element={user ? (character ? <Navigate to="/dashboard" replace /> : <Navigate to="/character/create" replace />) : <LoginPage setUser={setUser} />} />
+      <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignupPage setUser={setUser} />} />
+      <Route path="/character/create" element={user && !character ? <CharacterCreation setCharacter={setCharacter} /> : <Navigate to="/" replace />} />
+      <Route path="/dashboard" element={user && character ? <DashboardPage user={user} character={character} setUser={setUser} /> : <Navigate to="/" replace />} />
+      <Route path="/chat" element={user && character ? <GroupChatPage user={user} character={character} /> : <Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

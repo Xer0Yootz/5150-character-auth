@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../App.jsx';
 
-export default function CharacterCreation() {
+export default function CharacterCreation({ setCharacter }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ codename: '', birthday: '', location: '', latitude: '', longitude: '' });
   const [error, setError] = useState('');
@@ -11,7 +10,7 @@ export default function CharacterCreation() {
     event.preventDefault();
     setError('');
     try {
-      const response = await fetch(`${API_URL}/api/character/create`, {
+      const response = await fetch('/api/character/create', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -23,6 +22,7 @@ export default function CharacterCreation() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Character create failed');
+      setCharacter(data.character);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
