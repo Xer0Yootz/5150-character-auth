@@ -7,40 +7,71 @@ export default function LoginPage({ setUser }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError('');
+  function handleChange(e) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
     setLoading(true);
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Login failed');
-      setUser(data.user);
-      navigate('/');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    setError('');
+
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(form)
+    });
+
+    const data = await res.json();
+    setLoading(false);
+
+    if (!res.ok) {
+      setError(data.message || 'Login failed.');
+      return;
     }
-  };
+
+    setUser(data.user);
+    navigate('/');
+  }
 
   return (
-    <main>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-        <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
-        <label>Password<input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required /></label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={loading}>{loading ? 'Logging in' : 'Log in'}</button>
-      </form>
-      <p><a href="/auth/google">Continue with Google</a></p>
-      <p><a href="/auth/github">Continue with GitHub</a></p>
-      <p>Need an account? <Link to="/signup">Sign up</Link></p>
+    <main className="page-shell">
+      <div className="panel">
+        <div className="title-wrap">
+          <span className="tag">5150</span>
+          <h1>Login</h1>
+        </div>
+
+        <form className="form" onSubmit={handleSubmit}>
+          <label>
+            <span>Email</span>
+            <input name="email" type="email" onChange={handleChange} placeholder="you@example.com" required />
+          </label>
+
+          <label>
+            <span>Password</span>
+            <input name="password" type="password" onChange={handleChange} placeholder="••••••••" required />
+          </label>
+
+          {error && <p className="error">{error}</p>}
+
+          <button className="btn primary" type="submit" disabled={loading}>
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+
+        <div className="divider"><span>or</span></div>
+
+        <div className="oauth-row">
+          <a className="btn ghost" href="/auth/google">Google</a>
+          <a className="btn ghost" href="/auth/github">GitHub</a>
+        </div>
+
+        <p className="switch">
+          New to the network? <Link to="/signup">Create an account</Link>
+        </p>
+      </div>
     </main>
   );
 }

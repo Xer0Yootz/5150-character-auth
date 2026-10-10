@@ -5,16 +5,35 @@ body {
   color: #e8f3ff;
 }
 
-main {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 32px 16px;
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none;
+  padding: 24px;
 }
 
-form, .panel {
+.panel {
+  width: min(420px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(10, 10, 20, 0.82);
+}
+
+.title-wrap {
+  margin-bottom: 20px;
+}
+
+.tag {
+  color: #00f0ff;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+}
+
+.form {
   display: grid;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 14px;
 }
 
 label {
@@ -22,13 +41,61 @@ label {
   gap: 6px;
 }
 
-input, button {
+input, button, .btn {
   font: inherit;
   padding: 10px 12px;
 }
 
-button {
+input {
+  background: #0a0a14;
+  color: #e8f3ff;
+  border: 1px solid rgba(232, 243, 255, 0.2);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn.primary {
+  background: #c300ff;
+  color: #fff;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: #e8f3ff;
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: #8aa0b8;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(232, 243, 255, 0.16);
+}
+
+.oauth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.switch {
+  margin-top: 18px;
 }
 
 .error {
