@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { Icon } from '../icons.jsx';
 
 export default function HubPage({ user, character, setUser }) {
   const navigate = useNavigate();
@@ -19,10 +20,10 @@ export default function HubPage({ user, character, setUser }) {
         </div>
 
         <nav className="hub-actions">
-          <Link className="btn primary" to="/chat">Chat</Link>
-          <Link className="btn ghost" to="/character/edit">Edit Avatar</Link>
-          <Link className="btn ghost" to="/dashboard">Repos</Link>
-          <button type="button" className="btn ghost" onClick={logout}>Log out</button>
+          <Link className="btn primary" to="/chat"><Icon name="chat" /> Chat</Link>
+          <Link className="btn ghost" to="/character/edit"><Icon name="avatar" /> Edit Avatar</Link>
+          <Link className="btn ghost" to="/dashboard"><Icon name="repos" /> Repos</Link>
+          <button type="button" className="btn ghost" onClick={logout} aria-label="Log out"><Icon name="logout" /> Log out</button>
         </nav>
       </div>
     </main>

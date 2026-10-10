@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Icon } from '../icons.jsx';
 
 export default function LoginPage({ setUser }) {
   const navigate = useNavigate();
@@ -56,8 +57,8 @@ export default function LoginPage({ setUser }) {
 
           {error && <p className="error">{error}</p>}
 
-          <button className="btn primary" type="submit" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
+          <button className="btn primary" type="submit" disabled={loading} aria-label="Log in">
+            <Icon name="login" /> {loading ? 'Signing in…' : 'Log in'}
           </button>
         </form>
 
