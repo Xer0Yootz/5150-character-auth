@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoadingScreen from './pages/LoadingScreen.jsx';
+import Flourish from './pages/Flourish.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SignupPage from './pages/SignupPage.jsx';
 import CharacterCreation from './pages/CharacterCreation.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import GroupChatPage from './pages/GroupChatPage.jsx';
+import HubPage from './pages/HubPage.jsx';
 
 const MIN_INTRO_MS = 1800;
 const LOADED_HOLD_MS = 700;
+const FLOURISH_MS = 1600;
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -18,6 +21,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [character, setCharacter] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [flourish, setFlourish] = useState(false);
   const [progress, setProgress] = useState(8);
   const [label, setLabel] = useState('Hex operating system loading');
 
@@ -68,7 +72,12 @@ export default function App() {
         const elapsed = Date.now() - started;
         const remaining = Math.max(LOADED_HOLD_MS, MIN_INTRO_MS - elapsed);
         await wait(remaining);
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setFlourish(true);
+          await wait(FLOURISH_MS);
+          if (!cancelled) setFlourish(false);
+        }
       }
     }
 
@@ -83,16 +92,24 @@ export default function App() {
       <LoadingScreen
         progress={progress}
         label={label}
-        onSkip={() => setLoading(false)}
+        onSkip={() => {
+          setLoading(false);
+          setFlourish(true);
+          setTimeout(() => setFlourish(false), FLOURISH_MS);
+        }}
       />
     );
   }
 
+  if (flourish) return <Flourish />;
+
   return (
     <Routes>
-      <Route path="/" element={user ? (character ? <Navigate to="/dashboard" replace /> : <Navigate to="/character/create" replace />) : <LoginPage setUser={setUser} />} />
+      <Route path="/" element={user ? (character ? <Navigate to="/hub" replace /> : <Navigate to="/character/create" replace />) : <LoginPage setUser={setUser} />} />
       <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignupPage setUser={setUser} />} />
       <Route path="/character/create" element={user && !character ? <CharacterCreation setCharacter={setCharacter} /> : <Navigate to="/" replace />} />
+      <Route path="/character/edit" element={user ? <CharacterCreation setCharacter={setCharacter} existing={character} /> : <Navigate to="/" replace />} />
+      <Route path="/hub" element={user && character ? <HubPage user={user} character={character} setUser={setUser} /> : <Navigate to="/" replace />} />
       <Route path="/dashboard" element={user && character ? <DashboardPage user={user} character={character} setUser={setUser} /> : <Navigate to="/" replace />} />
       <Route path="/chat" element={user && character ? <GroupChatPage user={user} character={character} /> : <Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
