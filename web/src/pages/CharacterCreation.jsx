@@ -40,7 +40,7 @@ export default function CharacterCreation({ setCharacter, existing }) {
       <div className="panel">
         <div className="title-wrap">
           <span className="tag">5150</span>
-          <h1>{existing ? 'Edit character' : 'Create character'}</h1>
+          <h1>{existing ? 'Edit Avatar' : 'Create character'}</h1>
         </div>
         <form className="form" onSubmit={handleSubmit}>
           <label><span>Codename</span><input value={form.codename} onChange={(e) => setForm({ ...form, codename: e.target.value })} required /></label>
