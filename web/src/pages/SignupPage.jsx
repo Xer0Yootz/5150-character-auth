@@ -5,37 +5,71 @@ export default function SignupPage({ setUser }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  function handleChange(e) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
     setError('');
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Signup failed');
-      setUser(data.user);
-      navigate('/');
-    } catch (err) {
-      setError(err.message);
+
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(form)
+    });
+
+    const data = await res.json();
+    setLoading(false);
+
+    if (!res.ok) {
+      setError(data.message || 'Signup failed.');
+      return;
     }
-  };
+
+    setUser(data.user);
+    navigate('/');
+  }
 
   return (
-    <main>
-      <h1>Sign up</h1>
-      <form onSubmit={handleSubmit}>
-        <label>Name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
-        <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
-        <label>Password<input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required /></label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit">Create account</button>
-      </form>
-      <p>Already have an account? <Link to="/">Log in</Link></p>
+    <main className="page-shell">
+      <div className="panel">
+        <div className="title-wrap">
+          <span className="tag">5150</span>
+          <h1>Create Account</h1>
+        </div>
+
+        <form className="form" onSubmit={handleSubmit}>
+          <label>
+            <span>Name</span>
+            <input name="name" type="text" onChange={handleChange} placeholder="Your name" required />
+          </label>
+
+          <label>
+            <span>Email</span>
+            <input name="email" type="email" onChange={handleChange} placeholder="you@example.com" required />
+          </label>
+
+          <label>
+            <span>Password</span>
+            <input name="password" type="password" onChange={handleChange} placeholder="••••••••" required />
+          </label>
+
+          {error && <p className="error">{error}</p>}
+
+          <button className="btn primary" type="submit" disabled={loading}>
+            {loading ? 'Creating…' : 'Create account'}
+          </button>
+        </form>
+
+        <p className="switch">
+          Already on the network? <Link to="/">Sign in</Link>
+        </p>
+      </div>
     </main>
   );
 }
