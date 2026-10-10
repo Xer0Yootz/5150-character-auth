@@ -2,7 +2,12 @@ import { useEffect, useRef } from 'react';
 
 export default function GridField() {
   const canvasRef = useRef(null);
-  const pointer = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2, tx: window.innerWidth / 2, ty: window.innerHeight / 2 });
+  const pointer = useRef({
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+    tx: window.innerWidth / 2,
+    ty: window.innerHeight / 2
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -25,10 +30,10 @@ export default function GridField() {
       if (!running) return;
       frame += 1;
       const { width, height } = canvas;
-      const gap = 36;
+      const gap = 18;
       const current = pointer.current;
-      current.x += (current.tx - current.x) * 0.08;
-      current.y += (current.ty - current.y) * 0.08;
+      current.x += (current.tx - current.x) * 0.28;
+      current.y += (current.ty - current.y) * 0.28;
 
       context.clearRect(0, 0, width, height);
       const cols = Math.ceil(width / gap) + 1;
@@ -39,13 +44,10 @@ export default function GridField() {
         for (let col = 0; col < cols; col += 1) {
           const x = col * gap;
           const y = row * gap;
-          const dx = x - current.x;
-          const dy = y - current.y;
-          const distance = Math.hypot(dx, dy);
-          const wave = Math.sin(distance * 0.03 - frame * 0.08);
-          const follow = Math.max(0, 1 - distance / 280);
-          const light = Math.max(0, wave) * 0.35 + follow;
-          nodes.push({ x, y, light });
+          const distance = Math.hypot(x - current.x, y - current.y);
+          const wave = Math.sin(distance * 0.06 - frame * 0.12);
+          const follow = Math.max(0, 1 - distance / 140);
+          nodes.push({ x, y, light: Math.max(0, wave) * 0.3 + follow });
         }
       }
 
@@ -54,14 +56,14 @@ export default function GridField() {
         const right = nodes[index + 1];
         const below = nodes[index + cols];
         if (right && node.x < right.x) {
-          context.strokeStyle = `rgba(0, 240, 255, ${(node.light + right.light) * 0.18})`;
+          context.strokeStyle = `rgba(0, 240, 255, ${(node.light + right.light) * 0.16})`;
           context.beginPath();
           context.moveTo(node.x, node.y);
           context.lineTo(right.x, right.y);
           context.stroke();
         }
         if (below) {
-          context.strokeStyle = `rgba(195, 0, 255, ${(node.light + below.light) * 0.12})`;
+          context.strokeStyle = `rgba(195, 0, 255, ${(node.light + below.light) * 0.1})`;
           context.beginPath();
           context.moveTo(node.x, node.y);
           context.lineTo(below.x, below.y);
@@ -70,9 +72,9 @@ export default function GridField() {
       });
 
       nodes.forEach((node) => {
-        context.fillStyle = `rgba(0, 240, 255, ${0.15 + node.light * 0.85})`;
+        context.fillStyle = `rgba(0, 240, 255, ${0.12 + node.light * 0.88})`;
         context.beginPath();
-        context.arc(node.x, node.y, 1.2 + node.light * 2.4, 0, Math.PI * 2);
+        context.arc(node.x, node.y, 0.7 + node.light * 1.4, 0, Math.PI * 2);
         context.fill();
       });
 
