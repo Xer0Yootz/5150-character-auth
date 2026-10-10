@@ -7,6 +7,12 @@ import CharacterCreation from './pages/CharacterCreation.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import GroupChatPage from './pages/GroupChatPage.jsx';
 
+const MIN_INTRO_MS = 1800;
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [character, setCharacter] = useState(null);
@@ -16,6 +22,7 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    const started = Date.now();
 
     async function load() {
       try {
@@ -29,27 +36,26 @@ export default function App() {
           setUser(null);
           setProgress(100);
           setLabel('No session.');
-          return;
-        }
-
-        const data = await authResponse.json();
-        setUser(data.user);
-        setProgress(70);
-        setLabel('Your caste is being chosen…');
-
-        const characterResponse = await fetch('/api/character/me', { credentials: 'include' });
-        if (cancelled) return;
-        setProgress(90);
-
-        if (characterResponse.ok) {
-          const characterData = await characterResponse.json();
-          setCharacter(characterData.character || null);
-          setLabel(characterData.character ? 'Caste found.' : 'No caste yet.');
         } else {
-          setCharacter(null);
-          setLabel('No caste yet.');
+          const data = await authResponse.json();
+          setUser(data.user);
+          setProgress(70);
+          setLabel('Your caste is being chosen…');
+
+          const characterResponse = await fetch('/api/character/me', { credentials: 'include' });
+          if (cancelled) return;
+          setProgress(90);
+
+          if (characterResponse.ok) {
+            const characterData = await characterResponse.json();
+            setCharacter(characterData.character || null);
+            setLabel(characterData.character ? 'Caste found.' : 'No caste yet.');
+          } else {
+            setCharacter(null);
+            setLabel('No caste yet.');
+          }
+          setProgress(100);
         }
-        setProgress(100);
       } catch {
         if (!cancelled) {
           setUser(null);
@@ -57,6 +63,9 @@ export default function App() {
           setLabel('Session read failed.');
         }
       } finally {
+        const elapsed = Date.now() - started;
+        const remaining = Math.max(0, MIN_INTRO_MS - elapsed);
+        await wait(remaining);
         if (!cancelled) setLoading(false);
       }
     }
