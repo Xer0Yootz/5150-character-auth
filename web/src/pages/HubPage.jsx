@@ -20,7 +20,7 @@ export default function HubPage({ user, character, setUser }) {
 
         <nav className="hub-actions">
           <Link className="btn primary" to="/chat">Chat</Link>
-          <Link className="btn ghost" to="/character/edit">Edit character</Link>
+          <Link className="btn ghost" to="/character/edit">Edit Avatar</Link>
           <Link className="btn ghost" to="/dashboard">Repos</Link>
           <button type="button" className="btn ghost" onClick={logout}>Log out</button>
         </nav>
