@@ -132,6 +132,8 @@ a {
   height: 72px;
   display: block;
   margin: 0 auto 12px;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.55));
+  animation: hex-spin 8s linear infinite, hex-pulse 1.8s ease-in-out infinite;
 }
 
 .hexa-speak,
@@ -151,4 +153,14 @@ a {
   height: 100%;
   background: #c300ff;
   transition: width 180ms linear;
+}
+
+@keyframes hex-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hex-pulse {
+  0%, 100% { opacity: 0.72; filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.35)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 16px rgba(0, 240, 255, 0.9)); }
 }
