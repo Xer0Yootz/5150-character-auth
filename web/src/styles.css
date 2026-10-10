@@ -1,8 +1,8 @@
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #0d0d12;
-  color: #f2f2f2;
+  font-family: 'IBM Plex Mono', monospace;
+  background: transparent;
+  color: #e8f3ff;
 }
 
 main {
@@ -37,4 +37,49 @@ button {
 
 a {
   color: #9ad7ff;
+}
+
+.loading-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none;
+}
+
+.loading-content {
+  width: min(420px, 90vw);
+  text-align: center;
+}
+
+.hexa-name {
+  display: block;
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #00f0ff;
+}
+
+.hexa-speak,
+.loading-text {
+  color: #c8d8ea;
+}
+
+.loading-bar {
+  height: 4px;
+  margin: 24px 0;
+  background: rgba(232, 243, 255, 0.12);
+  overflow: hidden;
+}
+
+.loading-progress {
+  width: 40%;
+  height: 100%;
+  background: #c300ff;
+  animation: load 1.4s ease-in-out infinite;
+}
+
+@keyframes load {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
 }
