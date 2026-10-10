@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ModelViewer from '../components/ModelViewer.jsx';
 
 export default function CharacterCreation({ setCharacter, existing }) {
   const navigate = useNavigate();
@@ -8,7 +9,8 @@ export default function CharacterCreation({ setCharacter, existing }) {
     birthday: existing?.birthday || '',
     location: existing?.location || '',
     latitude: existing?.latitude ?? '',
-    longitude: existing?.longitude ?? ''
+    longitude: existing?.longitude ?? '',
+    modelUrl: existing?.modelUrl || ''
   });
   const [error, setError] = useState('');
 
@@ -42,12 +44,16 @@ export default function CharacterCreation({ setCharacter, existing }) {
           <span className="tag">5150</span>
           <h1>{existing ? 'Edit Avatar' : 'Create character'}</h1>
         </div>
+
+        {existing && <ModelViewer modelUrl={form.modelUrl || existing?.modelUrl} height={220} />}
+
         <form className="form" onSubmit={handleSubmit}>
           <label><span>Codename</span><input value={form.codename} onChange={(e) => setForm({ ...form, codename: e.target.value })} required /></label>
           <label><span>Birthday</span><input type="date" value={form.birthday} onChange={(e) => setForm({ ...form, birthday: e.target.value })} required /></label>
           <label><span>Location</span><input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required /></label>
           <label><span>Latitude</span><input value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} required /></label>
           <label><span>Longitude</span><input value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} required /></label>
+          <label><span>Model URL (GLB)</span><input value={form.modelUrl} onChange={(e) => setForm({ ...form, modelUrl: e.target.value })} placeholder="https://.../character.glb" /></label>
           {error && <p className="error">{error}</p>}
           <button className="btn primary" type="submit">{existing ? 'Save' : 'Assign caste'}</button>
         </form>

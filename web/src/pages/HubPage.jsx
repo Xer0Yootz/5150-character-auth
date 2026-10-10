@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
+import ModelViewer from '../components/ModelViewer.jsx';
 
 export default function HubPage({ user, character, setUser }) {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ export default function HubPage({ user, character, setUser }) {
           <h1>{character?.codename || user.name}</h1>
           <p className="hub-meta">{character?.caste} / {character?.tribe}</p>
         </div>
+
+        <ModelViewer modelUrl={character?.modelUrl} height={240} />
 
         <nav className="hub-actions">
           <Link className="btn primary" to="/chat"><Icon name="chat" /> Chat</Link>
