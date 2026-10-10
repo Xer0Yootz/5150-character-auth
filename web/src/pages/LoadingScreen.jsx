@@ -1,10 +1,27 @@
 import { useState } from 'react';
 
 const LINES = [
-  'Waking up… the city is listening.',
   'Session first. Caste second.',
-  'The bar is the real call, not a loop.'
+  'The bar is the real call, not a loop.',
+  'Skip if you already know.'
 ];
+
+function HexOsMark() {
+  return (
+    <svg className="hex-os-mark" viewBox="0 0 64 64" aria-label="Hex OS" role="img">
+      <polygon
+        points="32,4 56,18 56,46 32,60 8,46 8,18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <polygon
+        points="32,16 46,24 46,40 32,48 18,40 18,24"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 export default function LoadingScreen({ progress = 0, label = 'Reading the session…', onSkip }) {
   const [lineIndex, setLineIndex] = useState(0);
@@ -18,8 +35,8 @@ export default function LoadingScreen({ progress = 0, label = 'Reading the sessi
     <main className="loading-shell">
       <div className="loading-content">
         <div className="hexa-intro">
-          <button type="button" className="hexa-name hexa-button" onClick={cycleLine}>
-            HEXA
+          <button type="button" className="hexa-button" onClick={cycleLine} aria-label="Hex OS">
+            <HexOsMark />
           </button>
           <p className="hexa-speak">{LINES[lineIndex]}</p>
         </div>
