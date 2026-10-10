@@ -102,7 +102,7 @@ app.post('/api/character/assign', requireAuth, (req, res) => {
   const lookup = geoip.lookup(ip);
   const lat = latitude ?? lookup?.ll?.[0];
   const lon = longitude ?? lookup?.ll?.[1];
-  const result = assignCaste({ birthDate, latitude: lat, longitude: lon });
+  const result = assignCaste(birthDate, lat, lon);
   const user = updateUserById(req.session.userId, {
     birth_date: birthDate || null,
     latitude: lat ?? null,

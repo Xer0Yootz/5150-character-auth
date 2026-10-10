@@ -51,28 +51,10 @@ const castesByElementAndZodiac = {
   }
 };
 
-const abilities = {
-  'Iron Mountain Republic': ['Heat Resistance', 'Combat Training', 'Authority Command'],
-  'Amnion Clave': ['Biological Resonance', 'Healing Touch', 'Water Affinity'],
-  'Tide Clan': ['Current Reading', 'Predatory Instinct', 'Stealth Movement'],
-  'Vein-Singers': ['Harmonic Resonance', 'Nomadic Navigation', 'Fluid Adaptation'],
-  'Stone Roots': ['Deep Endurance', 'Mineral Reading', 'Root Connection'],
-  'City-Ruins Scavengers': ['Tech Salvage', 'Precision Extraction', 'Ancient Knowledge'],
-  'Bug Swarm Castes': ['Pheromonal Sensing', 'Collective Will', 'Swarm Coordination'],
-  'The Hounds': ['Pack Tactics', 'Heat Tracking', 'Oral Tradition'],
-  'The Strays': ['Signal Hacking', 'Vertical Mastery', 'Information Brokering'],
-  'The Climbers': ['Wind Reading', 'Canopy Navigation', 'Tree Sense'],
-  'The Symbiont Nodes': ['Data Drift', 'Wireless Presence', 'Distributed Consciousness'],
-  'The Void-Born': ['Orbital Awareness', 'Augmented Precision', 'Cold Logic'],
-  'The Scrappers': ['Implant Repair', 'Tech Jury-Rig', 'Salvage Sense'],
-  'Digitized Humans': ['Data Upload', 'Core Processing', 'Consciousness Transfer']
-};
-
 export function getZodiacSign(birthDate) {
   const date = new Date(birthDate);
-  if (Number.isNaN(date.getTime())) return null;
-  const month = date.getUTCMonth() + 1;
-  const day = date.getUTCDate();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
   const mmdd = month * 100 + day;
 
   for (const [sign, info] of Object.entries(zodiacMap)) {
@@ -83,67 +65,70 @@ export function getZodiacSign(birthDate) {
       return sign;
     }
   }
-  return null;
+  return 'pisces';
 }
 
 export function getClimateFromCoords(lat, lon) {
-  const absLat = Math.abs(Number(lat));
-  const longitude = Number(lon);
-  if (!Number.isFinite(absLat)) return 'temperate_forest';
+  const absLat = Math.abs(lat);
 
   if (absLat > 66.5) return 'tundra';
   if (absLat > 55) {
-    if (longitude > -180 && longitude < -60) return 'mountain';
+    if (lon > -180 && lon < -60) return 'mountain';
     return 'temperate_forest';
   }
   if (absLat > 35) {
-    if (Math.abs(longitude - -74) < 20) return 'urban';
-    if (Math.abs(longitude - -120) < 15) return 'mountain';
-    if (Math.abs(longitude - 0) < 30 && absLat < 45) return 'temperate_forest';
+    if (Math.abs(lon - -74) < 20) return 'urban';
+    if (Math.abs(lon - -120) < 15) return 'mountain';
+    if (Math.abs(lon - 0) < 30 && absLat < 45) return 'temperate_forest';
     return 'steppe';
   }
   if (absLat > 23.5) {
-    if (longitude > 95 && longitude < 105) return 'tropical';
-    if (longitude > 70 && longitude < 90) return 'jungle';
+    if (lon > 95 && lon < 105) return 'tropical';
+    if (lon > 70 && lon < 90) return 'jungle';
     return 'desert';
   }
-  if (longitude > 30 && longitude < 60) return 'jungle';
-  if (longitude > 140 || longitude < -120) return 'tropical';
-  if (longitude > 10 && longitude < 35) return 'tropical';
+
+  if (lon > 30 && lon < 60) return 'jungle';
+  if (lon > 140 || lon < -120) return 'tropical';
+  if (lon > 10 && lon < 35) return 'tropical';
+
   return 'tropical';
 }
 
-export function assignCaste({ birthDate, latitude, longitude }) {
+export function assignCaste(birthDate, latitude, longitude) {
   const zodiac = getZodiacSign(birthDate);
   const climate = getClimateFromCoords(latitude, longitude);
   const element = climateElementMap[climate] || 'earth';
-  const match = (zodiac && castesByElementAndZodiac[element]?.[zodiac]) || null;
-
-  if (!zodiac || !match) {
-    return {
-      zodiac: zodiac ? zodiacMap[zodiac].name : null,
-      climate,
-      element,
-      caste: null,
-      tribe: null,
-      description: null,
-      abilities: [],
-      note: 'Birth date is required. No fallback caste.'
-    };
-  }
+  const caste = castesByElementAndZodiac[element]?.[zodiac] || castesByElementAndZodiac.earth.taurus;
 
   return {
     zodiac: zodiacMap[zodiac].name,
     climate,
     element,
-    caste: match.caste,
-    tribe: match.tribe,
-    description: match.desc,
-    abilities: abilities[match.caste] || ['Survival', 'Learning', 'Adaptation'],
-    note: 'Assigned from zodiac and climate element.'
+    caste: caste.caste,
+    tribe: caste.tribe,
+    description: caste.desc,
+    abilities: getStartingAbilities(caste.caste)
   };
 }
 
 export function getStartingAbilities(caste) {
+  const abilities = {
+    'Iron Mountain Republic': ['Heat Resistance', 'Combat Training', 'Authority Command'],
+    'Amnion Clave': ['Biological Resonance', 'Healing Touch', 'Water Affinity'],
+    'Tide Clan': ['Current Reading', 'Predatory Instinct', 'Stealth Movement'],
+    'Vein-Singers': ['Harmonic Resonance', 'Nomadic Navigation', 'Fluid Adaptation'],
+    'Stone Roots': ['Deep Endurance', 'Mineral Reading', 'Root Connection'],
+    'City-Ruins Scavengers': ['Tech Salvage', 'Precision Extraction', 'Ancient Knowledge'],
+    'Bug Swarm Castes': ['Pheromonal Sensing', 'Collective Will', 'Swarm Coordination'],
+    'The Hounds': ['Pack Tactics', 'Heat Tracking', 'Oral Tradition'],
+    'The Strays': ['Signal Hacking', 'Vertical Mastery', 'Information Brokering'],
+    'The Climbers': ['Wind Reading', 'Canopy Navigation', 'Tree Sense'],
+    'The Symbiont Nodes': ['Data Drift', 'Wireless Presence', 'Distributed Consciousness'],
+    'The Void-Born': ['Orbital Awareness', 'Augmented Precision', 'Cold Logic'],
+    'The Scrappers': ['Implant Repair', 'Tech Jury-Rig', 'Salvage Sense'],
+    'Digitized Humans': ['Data Upload', 'Core Processing', 'Consciousness Transfer']
+  };
+
   return abilities[caste] || ['Survival', 'Learning', 'Adaptation'];
 }
