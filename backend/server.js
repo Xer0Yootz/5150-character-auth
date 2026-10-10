@@ -1,23 +1,15 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
-import geoip from 'geoip-lite';
-import db, {
-  comparePassword,
-  createCharacter,
-  createUser,
-  findUserByEmail,
-  findUserById,
-  getCharacterByUserId,
-  getUserRepos,
-  hashPassword,
-  publicUser,
-  saveRepo
-} from './db.js';
-import { assignCaste } from './caste-logic.js';
-import BitChatService, { getBitChatStatus, toggleBitChat } from './bitchat-service.js';
+import dotenv from 'dotenv';
+import path from 'path';
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as GitHubStrategy } from 'passport-github2';
+import * as db from './db.js';
+import { assignCaste, getStartingAbilities } from './caste-logic.js';
+import BitChatService from './bitchat-service.js';
 import { getAbilityUnlock, searchRepos } from './github-service.js';
 
 dotenv.config();
@@ -25,12 +17,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const bitChat = new BitChatService(db);
+const bitChat = new BitChatService(db.default);
 
-app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
-
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
@@ -38,192 +29,258 @@ app.use(session({
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     maxAge: 1000 * 60 * 60 * 24 * 7
   }
 }));
+app.use(passport.initialize());
+app.use(passport.session());
 
-function requireAuth(req, res, next) {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: 'Not authenticated.' });
-  }
-  next();
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser((id, done) => done(null, db.findUserById(id)));
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback'
+  }, (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value;
+      if (!email) return done(new Error('No email from Google'));
+
+      let user = db.findUserByEmail(email);
+      if (user) {
+        if (!user.google_id) {
+          user = db.updateUser(user.id, { google_id: profile.id, provider: 'google' });
+        }
+        return done(null, user);
+      }
+
+      const newUser = db.createUser({
+        name: profile.displayName || 'User',
+        email,
+        passwordHash: null,
+        provider: 'google',
+        googleId: profile.id
+      });
+      return done(null, newUser);
+    } catch (error) {
+      return done(error);
+    }
+  }));
 }
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true, message: 'Server is healthy' });
-});
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  passport.use(new GitHubStrategy({
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: '/auth/github/callback',
+    scope: ['user:email', 'repo']
+  }, (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value || `${profile.username}@github.com`;
+
+      let user = db.findUserByEmail(email);
+      if (user) {
+        if (!user.github_id) {
+          user = db.updateUser(user.id, {
+            github_id: profile.id,
+            github_token: accessToken,
+            provider: 'github'
+          });
+        }
+        return done(null, user);
+      }
+
+      const newUser = db.createUser({
+        name: profile.displayName || profile.username || 'User',
+        email,
+        passwordHash: null,
+        provider: 'github',
+        githubId: profile.id,
+        githubToken: accessToken
+      });
+      return done(null, newUser);
+    } catch (error) {
+      return done(error);
+    }
+  }));
+}
+
+app.use(express.static(path.join(process.cwd(), 'web', 'public')));
+
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 app.post('/api/auth/signup', (req, res) => {
   const { name, email, password } = req.body || {};
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: 'Name, email, and password are required.' });
-  }
-  if (password.length < 8) {
-    return res.status(400).json({ message: 'Password must be at least 8 characters long.' });
-  }
-  if (findUserByEmail(email)) {
-    return res.status(409).json({ message: 'An account with that email already exists.' });
-  }
-  const user = createUser({
-    name: name.trim(),
-    email,
-    passwordHash: hashPassword(password)
+  if (!name || !email || !password) return res.status(400).json({ message: 'Missing fields.' });
+  if (password.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+  if (db.findUserByEmail(email)) return res.status(409).json({ message: 'Email already registered.' });
+
+  const user = db.createUser({
+    name: String(name).trim(),
+    email: String(email).trim().toLowerCase(),
+    passwordHash: db.hashPassword(password),
+    provider: 'local'
   });
-  req.session.userId = user.id;
-  res.status(201).json({ message: 'Signup successful', user: publicUser(user) });
+
+  req.login(user, (err) => {
+    if (err) return res.status(500).json({ message: 'Login failed.' });
+    res.json({ user: { id: user.id, name: user.name, email: user.email, provider: user.provider } });
+  });
 });
 
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required.' });
-  }
-  const user = findUserByEmail(email);
-  if (!user || !user.password_hash || !comparePassword(password, user.password_hash)) {
-    return res.status(401).json({ message: 'Invalid email or password.' });
-  }
-  req.session.userId = user.id;
-  res.json({ message: 'Login successful', user: publicUser(user) });
+  if (!email || !password) return res.status(400).json({ message: 'Missing fields.' });
+
+  const user = db.findUserByEmail(email);
+  if (!user || !user.password_hash) return res.status(401).json({ message: 'Invalid credentials.' });
+  if (!db.comparePassword(password, user.password_hash)) return res.status(401).json({ message: 'Invalid credentials.' });
+
+  req.login(user, (err) => {
+    if (err) return res.status(500).json({ message: 'Login failed.' });
+    res.json({ user: { id: user.id, name: user.name, email: user.email, provider: user.provider } });
+  });
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie('connect.sid');
+  req.logout(() => {
     res.json({ message: 'Logged out.' });
   });
 });
 
-app.get('/api/auth/me', requireAuth, (req, res) => {
-  const user = findUserById(req.session.userId);
+app.get('/api/auth/me', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  const user = db.findUserById(req.user.id);
   if (!user) return res.status(401).json({ message: 'User not found.' });
-  res.json({
-    user: publicUser(user),
-    character: getCharacterByUserId(user.id),
-    repos: getUserRepos(user.id)
-  });
+  res.json({ user: { id: user.id, name: user.name, email: user.email, provider: user.provider } });
 });
 
-app.post('/api/character/assign', requireAuth, (req, res) => {
+app.post('/api/character/create', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+
   const { codename, birthday, location, latitude, longitude } = req.body || {};
-  if (!codename || !birthday || !location) {
-    return res.status(400).json({ message: 'Codename, birthday, and location are required.' });
+  if (!codename || !birthday || !location || latitude === undefined || longitude === undefined) {
+    return res.status(400).json({ message: 'Missing character fields.' });
   }
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  const lookup = geoip.lookup(ip);
-  const lat = latitude ?? lookup?.ll?.[0];
-  const lon = longitude ?? lookup?.ll?.[1];
-  if (lat == null || lon == null) {
-    return res.status(400).json({ message: 'Latitude and longitude are required.' });
-  }
-  const result = assignCaste(birthday, lat, lon);
-  const character = createCharacter({
-    userId: req.session.userId,
+
+  const casteData = assignCaste(birthday, latitude, longitude);
+  const abilities = getStartingAbilities(casteData.caste);
+  const character = db.createCharacter({
+    userId: req.user.id,
     codename,
     birthday,
     location,
-    latitude: lat,
-    longitude: lon,
-    zodiac: result.zodiac,
-    climate: result.climate,
-    element: result.element,
-    caste: result.caste,
-    tribe: result.tribe,
-    abilities: result.abilities
+    latitude,
+    longitude,
+    zodiac: casteData.zodiac,
+    climate: casteData.climate,
+    element: casteData.element,
+    caste: casteData.caste,
+    tribe: casteData.tribe,
+    abilities
   });
-  res.status(201).json({ character, assignment: result });
+
+  res.json({ character });
 });
 
-app.get('/api/bitchat/status', requireAuth, async (req, res) => {
-  res.json(await getBitChatStatus());
+app.get('/api/character/me', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  const character = db.getCharacterByUserId(req.user.id);
+  if (!character) return res.status(404).json({ message: 'No character found.' });
+  res.json({ character });
 });
 
-app.post('/api/bitchat/connect', requireAuth, async (req, res) => {
-  const { enabled } = req.body || {};
-  res.json({ status: await toggleBitChat(Boolean(enabled)) });
+app.get('/api/repos/search', async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  const q = String(req.query.q || '').trim();
+  if (!q) return res.status(400).json({ message: 'Search query required.' });
+
+  const repos = await searchRepos(q, process.env.GITHUB_API_TOKEN);
+  res.json({ repos });
 });
 
-app.post('/api/bitchat/keypair', requireAuth, (req, res) => {
-  const keys = bitChat.generateKeypair();
-  bitChat.saveKeypair(req.session.userId, keys.publicKey, keys.secretKey);
-  res.json({ publicKey: keys.publicKey });
+app.post('/api/repos/save', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  const { repoName, repoUrl, repoOwner, language } = req.body || {};
+  if (!repoName || !repoUrl) return res.status(400).json({ message: 'Missing repo fields.' });
+
+  const character = db.getCharacterByUserId(req.user.id);
+  if (!character) return res.status(404).json({ message: 'No character.' });
+
+  const abilityUnlock = getAbilityUnlock(repoName, language);
+  db.saveRepo(req.user.id, character.id, repoName, repoUrl, repoOwner || 'unknown', abilityUnlock);
+  res.json({ message: 'Saved.', ability: abilityUnlock });
 });
 
-app.post('/api/bitchat/group', requireAuth, (req, res) => {
-  const { name, members } = req.body || {};
-  if (!name) return res.status(400).json({ message: 'Group name is required.' });
-  const groupId = bitChat.createGroupChat(name, req.session.userId, Array.isArray(members) ? members : []);
-  res.status(201).json({ groupId });
+app.get('/api/repos/saved', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  res.json({ repos: db.getUserRepos(req.user.id) });
 });
 
-app.post('/api/bitchat/message', requireAuth, (req, res) => {
-  const { recipientId, groupId, message } = req.body || {};
-  if (!message || (!recipientId && !groupId)) {
-    return res.status(400).json({ message: 'Message and a recipient or group are required.' });
+app.get('/api/bitchat/keypair', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+
+  let user = db.findUserById(req.user.id);
+  if (!user.bitchat_public_key) {
+    const keypair = bitChat.generateKeypair();
+    user = db.updateUser(user.id, {
+      bitchat_public_key: keypair.publicKey,
+      bitchat_secret_key: keypair.secretKey
+    });
   }
-  const sender = findUserById(req.session.userId);
-  const senderKeys = bitChat.getKeypair(req.session.userId);
-  const targetKeys = bitChat.getKeypair(recipientId || req.session.userId);
-  if (!senderKeys || !targetKeys) {
-    return res.status(400).json({ message: 'Both sides need a keypair first.' });
-  }
-  const encrypted = bitChat.encryptMessage(senderKeys.secret_key, targetKeys.public_key, message);
-  if (!encrypted) return res.status(400).json({ message: 'Encrypt failed.' });
-  const id = bitChat.saveMessage(
-    sender.id,
-    sender.name,
-    recipientId || null,
-    encrypted.ciphertext,
-    encrypted.nonce,
-    groupId || null
-  );
-  res.status(201).json({ id, ...encrypted });
-});
 
-app.get('/api/bitchat/group/:id', requireAuth, (req, res) => {
-  const rows = bitChat.getGroupMessages(req.params.id);
-  const viewerKeys = bitChat.getKeypair(req.session.userId);
-  const messages = rows.map((row) => {
-    const senderKey = bitChat.getKeypair(row.sender_id);
-    const text = viewerKeys && senderKey
-      ? bitChat.decryptMessage(viewerKeys.secret_key, senderKey.public_key, row.ciphertext, row.nonce)
-      : null;
-    return {
-      id: row.id,
-      senderId: row.sender_id,
-      senderName: row.sender_name,
-      text,
-      createdAt: row.created_at
-    };
+  res.json({
+    publicKey: user.bitchat_public_key,
+    userId: user.id
   });
-  res.json({ messages });
 });
 
-app.get('/api/github/search', requireAuth, async (req, res) => {
-  const query = String(req.query.q || '').trim();
-  if (!query) return res.status(400).json({ message: 'Query is required.' });
-  const user = findUserById(req.session.userId);
-  const token = user?.github_token || process.env.GITHUB_API_TOKEN;
-  const repos = await searchRepos(query, token);
-  const withUnlocks = repos.map((repo) => ({
-    ...repo,
-    ability: getAbilityUnlock(repo.name, repo.language)
-  }));
-  res.json({ repos: withUnlocks });
+app.get('/api/bitchat/groups', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+
+  const groups = db.default.prepare(`
+    SELECT bg.* FROM bitchat_groups bg
+    JOIN bitchat_group_members bgm ON bg.id = bgm.group_id
+    WHERE bgm.member_id = ?
+  `).all(req.user.id);
+
+  res.json({ groups });
 });
 
-app.post('/api/github/save', requireAuth, (req, res) => {
-  const { name, url, owner, language } = req.body || {};
-  if (!name || !url || !owner) {
-    return res.status(400).json({ message: 'Repo name, url, and owner are required.' });
-  }
-  const character = getCharacterByUserId(req.session.userId);
-  if (!character) return res.status(400).json({ message: 'Create a character first.' });
-  const ability = getAbilityUnlock(name, language);
-  saveRepo(req.session.userId, character.id, name, url, owner, ability);
-  res.status(201).json({ ability, repos: getUserRepos(req.session.userId) });
+app.post('/api/bitchat/send', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+
+  const { recipientId, groupId, ciphertext, nonce } = req.body || {};
+  if (!ciphertext || !nonce) return res.status(400).json({ message: 'Missing message data.' });
+
+  const user = db.findUserById(req.user.id);
+  bitChat.saveMessage(req.user.id, user.name, recipientId, ciphertext, nonce, groupId);
+  res.json({ message: 'Sent.' });
+});
+
+app.get('/api/bitchat/messages/:groupId', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  res.json({ messages: bitChat.getGroupMessages(req.params.groupId) });
+});
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+  res.redirect(`${FRONTEND_URL}/dashboard`);
+});
+
+app.get('/auth/github', passport.authenticate('github', { scope: ['user:email', 'repo'] }));
+app.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/' }), (req, res) => {
+  res.redirect(`${FRONTEND_URL}/dashboard`);
+});
+
+app.get('*', (req, res) => {
+  const indexPath = path.join(process.cwd(), 'web', 'public', 'index.html');
+  res.sendFile(indexPath);
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`5150 Auth running on http://localhost:${PORT}`);
 });
