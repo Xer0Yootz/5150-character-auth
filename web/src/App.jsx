@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import GridField from './pages/GridField.jsx';
 import LoadingScreen from './pages/LoadingScreen.jsx';
 import Flourish from './pages/Flourish.jsx';
 import LoginPage from './pages/LoginPage.jsx';
@@ -87,8 +88,9 @@ export default function App() {
     };
   }, []);
 
+  let screen = null;
   if (loading) {
-    return (
+    screen = (
       <LoadingScreen
         progress={progress}
         label={label}
@@ -99,20 +101,27 @@ export default function App() {
         }}
       />
     );
+  } else if (flourish) {
+    screen = <Flourish />;
+  } else {
+    screen = (
+      <Routes>
+        <Route path="/" element={user ? (character ? <Navigate to="/hub" replace /> : <Navigate to="/character/create" replace />) : <LoginPage setUser={setUser} />} />
+        <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignupPage setUser={setUser} />} />
+        <Route path="/character/create" element={user && !character ? <CharacterCreation setCharacter={setCharacter} /> : <Navigate to="/" replace />} />
+        <Route path="/character/edit" element={user ? <CharacterCreation setCharacter={setCharacter} existing={character} /> : <Navigate to="/" replace />} />
+        <Route path="/hub" element={user && character ? <HubPage user={user} character={character} setUser={setUser} /> : <Navigate to="/" replace />} />
+        <Route path="/dashboard" element={user && character ? <DashboardPage user={user} character={character} setUser={setUser} /> : <Navigate to="/" replace />} />
+        <Route path="/chat" element={user && character ? <GroupChatPage user={user} character={character} /> : <Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
-  if (flourish) return <Flourish />;
-
   return (
-    <Routes>
-      <Route path="/" element={user ? (character ? <Navigate to="/hub" replace /> : <Navigate to="/character/create" replace />) : <LoginPage setUser={setUser} />} />
-      <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignupPage setUser={setUser} />} />
-      <Route path="/character/create" element={user && !character ? <CharacterCreation setCharacter={setCharacter} /> : <Navigate to="/" replace />} />
-      <Route path="/character/edit" element={user ? <CharacterCreation setCharacter={setCharacter} existing={character} /> : <Navigate to="/" replace />} />
-      <Route path="/hub" element={user && character ? <HubPage user={user} character={character} setUser={setUser} /> : <Navigate to="/" replace />} />
-      <Route path="/dashboard" element={user && character ? <DashboardPage user={user} character={character} setUser={setUser} /> : <Navigate to="/" replace />} />
-      <Route path="/chat" element={user && character ? <GroupChatPage user={user} character={character} /> : <Navigate to="/" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <GridField />
+      <div className="screen-layer">{screen}</div>
+    </>
   );
 }
