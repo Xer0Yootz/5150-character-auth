@@ -77,7 +77,13 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return <LoadingScreen progress={progress} label={label} />;
+    return (
+      <LoadingScreen
+        progress={progress}
+        label={label}
+        onSkip={() => setLoading(false)}
+      />
+    );
   }
 
   return (

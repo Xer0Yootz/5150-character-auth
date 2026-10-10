@@ -127,8 +127,16 @@ a {
   color: #00f0ff;
 }
 
+.hexa-button {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
 .hexa-speak,
-.loading-text {
+.loading-text,
+.loading-percent {
   color: #c8d8ea;
 }
 
