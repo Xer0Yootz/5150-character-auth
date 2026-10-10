@@ -20,15 +20,15 @@ import { abilitiesFromRepos, listUserRepos } from './github-service.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 4000;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const PORT = process.env.PORT || 3000;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'change-me',
+  secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
   saveUninitialized: false,
   cookie: {

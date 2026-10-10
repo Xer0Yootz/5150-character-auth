@@ -10,7 +10,13 @@ cp .env.example .env
 npm run dev
 ```
 
-Server listens on http://localhost:4000.
+Server listens on http://localhost:3000.
+
+## Env
+
+PORT and FRONTEND_URL both default to 3000. If the web app binds the same port, move one of them.
+OPEN_CAGE_API_KEY is reserved for reverse geocoding. Not wired yet.
+BITCHAT_ENABLED defaults true. BitChat still needs BITCHAT_BASE_URL and BITCHAT_API_KEY.
 
 ## Routes
 
