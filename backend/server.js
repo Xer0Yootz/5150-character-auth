@@ -17,7 +17,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const bitChat = new BitChatService(db.default);
 
 app.use(express.json());
@@ -31,7 +31,8 @@ app.use(session({
     httpOnly: true,
     sameSite: 'lax',
     secure: false,
-    maxAge: 1000 * 60 * 60 * 24 * 7
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+    path: '/'
   }
 }));
 app.use(passport.initialize());
@@ -196,7 +197,9 @@ app.get('/api/character/me', (req, res) => {
 });
 
 app.post('/api/gemini/chat', async (req, res) => {
-  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: 'Not authenticated. Log in again and retry.' });
+  }
   const { message } = req.body || {};
   if (!message) return res.status(400).json({ message: 'Message required.' });
 
