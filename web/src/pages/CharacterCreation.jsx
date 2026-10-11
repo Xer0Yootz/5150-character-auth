@@ -85,11 +85,13 @@ export default function CharacterCreation({ setCharacter, existing }) {
   const [error, setError] = useState('');
   const [gpsStatus, setGpsStatus] = useState('');
   const [useGpsMode, setUseGpsMode] = useState(false);
+  const [cityMode, setCityMode] = useState(false);
   const [showGlb, setShowGlb] = useState(false);
 
   const useGps = () => {
     setGpsStatus('Reading GPS');
     setUseGpsMode(true);
+    setCityMode(false);
     if (!navigator.geolocation) {
       setGpsStatus('GPS not available');
       setUseGpsMode(false);
@@ -122,6 +124,11 @@ export default function CharacterCreation({ setCharacter, existing }) {
 
   const selectCity = (e) => {
     const name = e.target.value;
+    if (!name) {
+      setCityMode(false);
+      setForm((f) => ({ ...f, location: '', latitude: null, longitude: null }));
+      return;
+    }
     const city = CITIES.find((c) => c.name === name);
     if (!city) return;
     setForm((f) => ({
@@ -132,6 +139,12 @@ export default function CharacterCreation({ setCharacter, existing }) {
     }));
     setGpsStatus('');
     setUseGpsMode(false);
+    setCityMode(true);
+  };
+
+  const clearCity = () => {
+    setCityMode(false);
+    setForm((f) => ({ ...f, location: '', latitude: null, longitude: null }));
   };
 
   const selectPremade = (e) => {
@@ -169,6 +182,17 @@ export default function CharacterCreation({ setCharacter, existing }) {
     }
   };
 
+  const selectStyle = {
+    flex: 1,
+    minWidth: 160,
+    background: 'transparent',
+    color: '#e8f3ff',
+    border: '1px solid rgba(0, 240, 255, 0.4)',
+    padding: '10px 12px',
+    font: 'inherit',
+    borderRadius: 0
+  };
+
   return (
     <main className="page-shell">
       <div className="panel">
@@ -185,16 +209,21 @@ export default function CharacterCreation({ setCharacter, existing }) {
 
           <div>
             <span>Location</span>
-            <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-              <button type="button" className="btn ghost" onClick={useGps}>Use GPS</button>
+            <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              {!cityMode && (
+                <button type="button" className="btn ghost" onClick={useGps}>Use GPS</button>
+              )}
               {useGpsMode && <button type="button" className="btn ghost" onClick={clearGps}>Clear</button>}
               {!useGpsMode && (
-                <select onChange={selectCity} value={form.location} style={{ flex: 1, minWidth: 160 }}>
-                  <option value="">Select city, state</option>
-                  {CITIES.map((c) => (
-                    <option key={c.name} value={c.name}>{c.name}</option>
-                  ))}
-                </select>
+                <>
+                  <select onChange={selectCity} value={form.location} style={selectStyle}>
+                    <option value="">Select city, state</option>
+                    {CITIES.map((c) => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                  {cityMode && <button type="button" className="btn ghost" onClick={clearCity}>Clear</button>}
+                </>
               )}
             </div>
             {gpsStatus && <p className="hub-meta" style={{ marginTop: 6 }}>{gpsStatus}</p>}
@@ -207,7 +236,7 @@ export default function CharacterCreation({ setCharacter, existing }) {
 
           <div style={{ marginTop: 8 }}>
             <span style={{ fontSize: 12, color: '#8aa0b8' }}>Avatar</span>
-            <select onChange={selectPremade} value={form.modelUrl} style={{ display: 'block', width: '100%', marginTop: 4 }}>
+            <select onChange={selectPremade} value={form.modelUrl} style={{ ...selectStyle, display: 'block', width: '100%', marginTop: 4 }}>
               {PREMADE.map((p) => (
                 <option key={p.name} value={p.url}>{p.name}</option>
               ))}
