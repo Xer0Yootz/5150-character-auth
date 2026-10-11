@@ -1,29 +1,52 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment, ContactShadows } from '@react-three/drei';
-import { Suspense, useRef } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
-function PlaceholderCharacter() {
+function applyAccent(object, accentColor) {
+  if (!object || !accentColor) return;
+  const color = new THREE.Color(accentColor);
+  object.traverse((child) => {
+    if (!child.isMesh) return;
+    child.castShadow = true;
+    child.receiveShadow = true;
+    const mats = Array.isArray(child.material) ? child.material : [child.material];
+    const nextMats = mats.map((mat) => {
+      if (!mat) return mat;
+      const next = mat.clone();
+      if (next.color) next.color.copy(color);
+      if (next.emissive) {
+        next.emissive.copy(color);
+        next.emissiveIntensity = Math.max(next.emissiveIntensity || 0, 0.25);
+      }
+      return next;
+    });
+    child.material = Array.isArray(child.material) ? nextMats : nextMats[0];
+  });
+}
+
+function PlaceholderCharacter({ accentColor }) {
   const ref = useRef();
+  const color = accentColor || '#00f0ff';
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += delta * 0.4;
   });
   return (
     <mesh ref={ref} position={[0, 0.6, 0]} castShadow>
       <icosahedronGeometry args={[0.7, 1]} />
-      <meshStandardMaterial color="#00f0ff" emissive="#c300ff" emissiveIntensity={0.35} roughness={0.4} metalness={0.2} wireframe />
+      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} roughness={0.4} metalness={0.2} wireframe />
     </mesh>
   );
 }
 
-function LoadedCharacter({ url }) {
+function LoadedCharacter({ url, accentColor }) {
   const { scene } = useGLTF(url);
-  scene.traverse((child) => {
-    if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-    }
-  });
-  return <primitive object={scene} scale={1.2} position={[0, 0, 0]} />;
+  const tinted = useMemo(() => {
+    const clone = scene.clone(true);
+    applyAccent(clone, accentColor);
+    return clone;
+  }, [scene, accentColor]);
+  return <primitive object={tinted} scale={1.2} position={[0, 0, 0]} />;
 }
 
 function ProceduralGarden() {
@@ -64,7 +87,8 @@ export default function WorldViewer({
   viewMode = 'procedural',
   plateUrl,
   height = 280,
-  lightsOn = true
+  lightsOn = true,
+  accentColor
 }) {
   const bg = viewMode === 'plate' && plateUrl ? `url(${plateUrl}) center/cover no-repeat` : undefined;
   const isGarden = viewMode === 'procedural';
@@ -73,7 +97,7 @@ export default function WorldViewer({
     <div className="model-viewer" style={{ height, background: bg }}>
       {viewMode === 'plate' ? (
         <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'end center', paddingBottom: 24 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', border: '2px solid #00f0ff', background: 'rgba(0,240,255,0.12)', display: 'grid', placeItems: 'center', color: '#00f0ff', fontSize: 12 }}>N</div>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', border: `2px solid ${accentColor || '#00f0ff'}`, background: 'rgba(0,240,255,0.12)', display: 'grid', placeItems: 'center', color: accentColor || '#00f0ff', fontSize: 12 }}>N</div>
         </div>
       ) : (
         <Canvas shadows camera={{ position: [0, 1.6, 4.2], fov: 42 }}>
@@ -99,11 +123,11 @@ export default function WorldViewer({
             intensity={lightsOn ? 0.35 : 0}
             color={isGarden ? '#66ccff' : '#aaccff'}
           />
-          <pointLight position={[-2.5, 1.2, 1]} color="#c300ff" intensity={lightsOn ? 0.6 : 0.1} distance={8} decay={2} />
+          <pointLight position={[-2.5, 1.2, 1]} color={accentColor || '#c300ff'} intensity={lightsOn ? 0.6 : 0.1} distance={8} decay={2} />
           <pointLight position={[2.8, 0.8, -1]} color="#00ffaa" intensity={lightsOn ? 0.45 : 0.08} distance={7} decay={2} />
           <Suspense fallback={null}>
             {isGarden ? <ProceduralGarden /> : worldUrl ? null : <PlaceholderWorld />}
-            {modelUrl ? <LoadedCharacter url={modelUrl} /> : <PlaceholderCharacter />}
+            {modelUrl ? <LoadedCharacter url={modelUrl} accentColor={accentColor} /> : <PlaceholderCharacter accentColor={accentColor} />}
           </Suspense>
           <ContactShadows position={[0, 0.01, 0]} opacity={lightsOn ? 0.5 : 0.12} scale={8} blur={2.8} far={4} />
           <Environment preset={lightsOn ? (isGarden ? 'sunset' : 'city') : 'night'} />

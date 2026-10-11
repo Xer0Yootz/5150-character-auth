@@ -18,6 +18,7 @@ export default function HubPage({ user, character, setUser }) {
   const [chatOpen, setChatOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
   const [weather, setWeather] = useState('');
+  const accent = character?.accentColor || '#DD00FF';
 
   useEffect(() => {
     localStorage.setItem('5150-lights', lightsOn ? 'on' : 'off');
@@ -62,7 +63,7 @@ export default function HubPage({ user, character, setUser }) {
       <div className="panel hub-panel">
         <div className="title-wrap">
           <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
-          <h1>{character?.codename || user.name}</h1>
+          <h1 style={{ color: accent }}>{character?.codename || user.name}</h1>
           <p className="hub-meta">{character?.caste} / {character?.tribe}</p>
         </div>
 
@@ -103,6 +104,7 @@ export default function HubPage({ user, character, setUser }) {
           plateUrl={character?.plateUrl || '/garden-shore.jpg'}
           height={280}
           lightsOn={lightsOn}
+          accentColor={accent}
         />
 
         {chatOpen && (
@@ -125,7 +127,7 @@ export default function HubPage({ user, character, setUser }) {
         </nav>
 
         <p style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: '#8aa0b8' }}>
-          GRID STATUS: {weather || 'reading'} \u00b7 {character?.location || 'no location'}
+          GRID STATUS: {weather || 'reading'} \u00b7 {character?.location || 'no location'} \u00b7 <span style={{ color: accent }}>{accent}</span>
         </p>
         <p style={{ textAlign: 'center', marginTop: 8, fontSize: 12, letterSpacing: '0.08em', color: '#8aa0b8' }}>Neon Vigil</p>
       </div>
