@@ -4,9 +4,8 @@ import { Icon } from '../icons.jsx';
 import WorldViewer from '../components/WorldViewer.jsx';
 
 const MODES = [
-  { id: 'procedural', label: 'Procedural' },
-  { id: 'skybox', label: 'Skybox' },
-  { id: 'plate', label: 'Plate' }
+  { id: 'procedural', label: 'In World Preview' },
+  { id: 'skybox', label: 'No Background Preview' }
 ];
 
 export default function HubPage({ user, character, setUser }) {
@@ -16,6 +15,8 @@ export default function HubPage({ user, character, setUser }) {
     return saved === null ? true : saved === 'on';
   });
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('5150-view') || 'procedural');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('5150-lights', lightsOn ? 'on' : 'off');
@@ -46,28 +47,19 @@ export default function HubPage({ user, character, setUser }) {
               key={m.id}
               type="button"
               className={viewMode === m.id ? 'mode-btn active' : 'mode-btn'}
-              onClick={() => setViewMode(m.id)}
+              onClick={() => { setViewMode(m.id); setMapOpen(false); }}
             >
               {m.label}
             </button>
           ))}
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <WorldViewer
-            modelUrl={character?.modelUrl}
-            worldUrl={character?.worldUrl}
-            viewMode={viewMode}
-            plateUrl={character?.plateUrl || '/garden-shore.jpg'}
-            height={280}
-            lightsOn={lightsOn}
-          />
+        <div style={{ marginBottom: 8 }}>
           <button
             type="button"
             className="lights-bulb"
             onClick={() => setLightsOn((v) => !v)}
             aria-label={lightsOn ? 'Turn off the lights' : 'Turn on the lights'}
-            style={{ position: 'absolute', top: 8, right: 8 }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18h6" />
@@ -77,12 +69,36 @@ export default function HubPage({ user, character, setUser }) {
           </button>
         </div>
 
-        <nav className="hub-actions">
-          <Link className="btn primary" to="/chat"><Icon name="chat" /> Chat</Link>
+        <WorldViewer
+          modelUrl={character?.modelUrl}
+          worldUrl={character?.worldUrl}
+          viewMode={mapOpen ? 'plate' : viewMode}
+          plateUrl={character?.plateUrl || '/garden-shore.jpg'}
+          height={280}
+          lightsOn={lightsOn}
+        />
+
+        {chatOpen && (
+          <div className="panel" style={{ marginTop: 12, padding: 12 }}>
+            <p className="hub-meta" style={{ marginBottom: 8 }}>Chat</p>
+            <p className="hub-meta" style={{ fontSize: 12 }}>Hexa offline. BitChat groups load on the full chat page.</p>
+            <Link className="btn ghost" to="/chat" style={{ marginTop: 8, display: 'inline-block' }}>Open full chat</Link>
+          </div>
+        )}
+
+        <nav className="hub-actions" style={{ marginTop: 12 }}>
+          <button type="button" className="btn primary" onClick={() => setChatOpen((v) => !v)}>
+            <Icon name="chat" /> Chat
+          </button>
+          <button type="button" className={mapOpen ? 'btn primary' : 'btn ghost'} onClick={() => setMapOpen((v) => !v)}>
+            MAP
+          </button>
           <Link className="btn ghost" to="/character/edit"><Icon name="avatar" /> Edit Avatar</Link>
           <Link className="btn ghost" to="/dashboard"><Icon name="repos" /> Repos</Link>
           <button type="button" className="btn ghost" onClick={logout} aria-label="Log out"><Icon name="logout" /> Log out</button>
         </nav>
+
+        <p style={{ textAlign: 'center', marginTop: 24, fontSize: 12, letterSpacing: '0.08em', color: '#8aa0b8' }}>Neon Vigil</p>
       </div>
     </main>
   );
