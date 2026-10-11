@@ -95,6 +95,25 @@ export function getClimateFromCoords(lat, lon) {
   return 'tropical';
 }
 
+export function assignAccentColor(codename, birthday, latitude, longitude) {
+  const cleanName = String(codename || 'Neon')
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '')
+    .slice(0, 6) || 'NEON';
+
+  const nameSum = cleanName.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
+  const date = new Date(birthday || '1984-08-23');
+  const dateSum = (date.getMonth() + 1) * date.getDate();
+
+  const locationSum = Math.round(Math.abs(Number(latitude) || 0) * 10 + Math.abs(Number(longitude) || 0) * 10);
+
+  const total = (nameSum + dateSum + locationSum) % 6;
+
+  const palette = ['#FFD700', '#00FF00', '#FF3333', '#0099FF', '#DD00FF', '#FF1493'];
+  return palette[total] || '#DD00FF';
+}
+
 export function assignCaste(birthDate, latitude, longitude) {
   const zodiac = getZodiacSign(birthDate);
   const climate = getClimateFromCoords(latitude, longitude);

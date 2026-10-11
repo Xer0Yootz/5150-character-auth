@@ -8,7 +8,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy } from 'passport-github2';
 import * as db from './db.js';
-import { assignCaste, getStartingAbilities } from './caste-logic.js';
+import { assignCaste, getStartingAbilities, assignAccentColor } from './caste-logic.js';
 import BitChatService from './bitchat-service.js';
 import { getAbilityUnlock, searchRepos } from './github-service.js';
 import { geminiReply } from './gemini-service.js';
@@ -160,6 +160,7 @@ app.post('/api/character/create', (req, res) => {
   }
   const casteData = assignCaste(birthday, latitude, longitude);
   const abilities = getStartingAbilities(casteData.caste);
+  const accentColor = assignAccentColor(codename, birthday, latitude, longitude);
   const character = db.createCharacter({
     userId: req.user.id,
     codename,
@@ -173,7 +174,8 @@ app.post('/api/character/create', (req, res) => {
     caste: casteData.caste,
     tribe: casteData.tribe,
     abilities,
-    modelUrl: modelUrl || null
+    modelUrl: modelUrl || null,
+    accentColor
   });
   res.json({ character });
 });

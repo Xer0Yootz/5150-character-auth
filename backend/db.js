@@ -42,6 +42,7 @@ db.exec(`
     abilities TEXT,
     github_upgrades TEXT DEFAULT '[]',
     model_url TEXT,
+    accent_color TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
@@ -96,6 +97,12 @@ try {
   // column already present
 }
 
+try {
+  db.exec('ALTER TABLE characters ADD COLUMN accent_color TEXT');
+} catch {
+  // column already present
+}
+
 export function findUserByEmail(email) {
   return db.prepare('SELECT * FROM users WHERE email = ?').get(String(email).toLowerCase()) || null;
 }
@@ -128,24 +135,24 @@ export function updateUser(id, updates) {
 
 export function createCharacter({
   userId, codename, birthday, location, latitude, longitude,
-  zodiac, climate, element, caste, tribe, abilities, modelUrl = null
+  zodiac, climate, element, caste, tribe, abilities, modelUrl = null, accentColor = null
 }) {
   const existing = getCharacterByUserId(userId);
   if (existing) {
     return updateCharacter(existing.id, {
       codename, birthday, location, latitude, longitude,
-      zodiac, climate, element, caste, tribe, abilities, modelUrl
+      zodiac, climate, element, caste, tribe, abilities, modelUrl, accentColor
     });
   }
   const id = `char_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   db.prepare(`
     INSERT INTO characters (
       id, user_id, codename, birthday, location, latitude, longitude,
-      zodiac, climate, element, caste, tribe, abilities, model_url
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      zodiac, climate, element, caste, tribe, abilities, model_url, accent_color
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, userId, codename, birthday, location, latitude, longitude,
-    zodiac, climate, element, caste, tribe, JSON.stringify(abilities || []), modelUrl
+    zodiac, climate, element, caste, tribe, JSON.stringify(abilities || []), modelUrl, accentColor
   );
   return getCharacterById(id);
 }
@@ -163,7 +170,8 @@ export function updateCharacter(id, updates) {
     caste: updates.caste,
     tribe: updates.tribe,
     abilities: JSON.stringify(updates.abilities || []),
-    model_url: updates.modelUrl || null
+    model_url: updates.modelUrl || null,
+    accent_color: updates.accentColor || null
   };
   const keys = Object.keys(fields);
   const values = keys.map((k) => fields[k]);
@@ -178,6 +186,7 @@ export function getCharacterById(id) {
   character.abilities = JSON.parse(character.abilities || '[]');
   character.github_upgrades = JSON.parse(character.github_upgrades || '[]');
   character.modelUrl = character.model_url || null;
+  character.accentColor = character.accent_color || null;
   return character;
 }
 
@@ -187,6 +196,7 @@ export function getCharacterByUserId(userId) {
   character.abilities = JSON.parse(character.abilities || '[]');
   character.github_upgrades = JSON.parse(character.github_upgrades || '[]');
   character.modelUrl = character.model_url || null;
+  character.accentColor = character.accent_color || null;
   return character;
 }
 
