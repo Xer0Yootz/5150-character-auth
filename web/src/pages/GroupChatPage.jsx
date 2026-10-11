@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 
+const DISCORD_SERVER_ID = ''; // set when you have a Discord server ID
+
 export default function GroupChatPage({ user, character }) {
   const [groups, setGroups] = useState([]);
   const [groupId, setGroupId] = useState('');
@@ -10,6 +12,7 @@ export default function GroupChatPage({ user, character }) {
   const [error, setError] = useState('');
   const [btStatus, setBtStatus] = useState('Bluetooth not requested');
   const [btDevice, setBtDevice] = useState('');
+  const [room, setRoom] = useState('neon');
   const endRef = useRef(null);
 
   async function ensureRoom() {
@@ -122,60 +125,102 @@ export default function GroupChatPage({ user, character }) {
         </div>
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-          {groups.map((group) => (
-            <button
-              key={group.id}
-              type="button"
-              className={groupId === group.id ? 'btn primary' : 'btn ghost'}
-              onClick={() => { setGroupId(group.id); loadMessages(group.id); }}
-            >
-              {group.name}
-            </button>
-          ))}
+          <button
+            type="button"
+            className={room === 'neon' ? 'btn primary' : 'btn ghost'}
+            onClick={() => setRoom('neon')}
+          >
+            Neon Vigil
+          </button>
+          <button
+            type="button"
+            className={room === 'discord' ? 'btn primary' : 'btn ghost'}
+            onClick={() => setRoom('discord')}
+          >
+            Discord
+          </button>
         </div>
 
-        <div style={{
-          height: 280,
-          overflowY: 'auto',
-          border: '1px solid rgba(0, 240, 255, 0.3)',
-          padding: 10,
-          marginBottom: 10,
-          background: 'rgba(0,0,0,0.35)'
-        }}>
-          {messages.length === 0 && <p className="hub-meta" style={{ fontSize: 12 }}>No messages yet.</p>}
-          {messages.map((message) => {
-            const mine = message.sender_id === user.id;
-            return (
-              <div key={message.id} style={{
-                display: 'flex',
-                justifyContent: mine ? 'flex-end' : 'flex-start',
-                marginBottom: 8
-              }}>
-                <div style={{
-                  maxWidth: '75%',
-                  padding: '8px 10px',
-                  background: mine ? 'rgba(195, 0, 255, 0.25)' : 'rgba(0, 240, 255, 0.12)',
-                  border: mine ? '1px solid rgba(195, 0, 255, 0.5)' : '1px solid rgba(0, 240, 255, 0.4)'
-                }}>
-                  <div style={{ fontSize: 10, color: '#8aa0b8', marginBottom: 2 }}>
-                    {mine ? 'You' : message.sender_name}
+        {room === 'neon' && (
+          <>
+            <div style={{
+              height: 280,
+              overflowY: 'auto',
+              border: '1px solid rgba(0, 240, 255, 0.3)',
+              padding: 10,
+              marginBottom: 10,
+              background: 'rgba(0,0,0,0.35)'
+            }}>
+              {messages.length === 0 && <p className="hub-meta" style={{ fontSize: 12 }}>No messages yet.</p>}
+              {messages.map((message) => {
+                const mine = message.sender_id === user.id;
+                return (
+                  <div key={message.id} style={{
+                    display: 'flex',
+                    justifyContent: mine ? 'flex-end' : 'flex-start',
+                    marginBottom: 8
+                  }}>
+                    <div style={{
+                      maxWidth: '75%',
+                      padding: '8px 10px',
+                      background: mine ? 'rgba(195, 0, 255, 0.25)' : 'rgba(0, 240, 255, 0.12)',
+                      border: mine ? '1px solid rgba(195, 0, 255, 0.5)' : '1px solid rgba(0, 240, 255, 0.4)'
+                    }}>
+                      <div style={{ fontSize: 10, color: '#8aa0b8', marginBottom: 2 }}>
+                        {mine ? 'You' : message.sender_name}
+                      </div>
+                      <div style={{ fontSize: 14 }}>{message.ciphertext}</div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 14 }}>{message.ciphertext}</div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={endRef} />
-        </div>
+                );
+              })}
+              <div ref={endRef} />
+            </div>
 
-        <form className="form" onSubmit={send}>
-          <label>
-            <span>Message</span>
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message" />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button className="btn primary" type="submit">Send</button>
-        </form>
+            <form className="form" onSubmit={send}>
+              <label>
+                <span>Message</span>
+                <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message" />
+              </label>
+              {error && <p className="error">{error}</p>}
+              <button className="btn primary" type="submit">Send</button>
+            </form>
+          </>
+        )}
+
+        {room === 'discord' && (
+          <div style={{
+            height: 360,
+            border: '1px solid rgba(0, 240, 255, 0.3)',
+            background: 'rgba(0,0,0,0.35)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16
+          }}>
+            {DISCORD_SERVER_ID ? (
+              <iframe
+                title="Discord"
+                src={`https://discord.com/widget?id=${DISCORD_SERVER_ID}&theme=dark`}
+                width="100%"
+                height="340"
+                frameBorder="0"
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+              />
+            ) : (
+              <>
+                <p className="hub-meta" style={{ marginBottom: 8 }}>Discord room</p>
+                <p className="hub-meta" style={{ fontSize: 12, textAlign: 'center' }}>
+                  Paste your Discord server ID to show the widget here. Or open your server in a new tab.
+                </p>
+                <a className="btn ghost" href="https://discord.com" target="_blank" rel="noreferrer" style={{ marginTop: 12 }}>
+                  Open Discord
+                </a>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
