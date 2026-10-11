@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import ModelViewer from '../components/ModelViewer.jsx';
 
 const CITIES = [
@@ -197,9 +197,10 @@ export default function CharacterCreation({ setCharacter, existing }) {
     <main className="page-shell">
       <div className="panel">
         <div className="title-wrap">
-          <span className="tag">5150</span>
+          <span className="tag">Neon Vigil</span>
           <h1>{existing ? 'Edit Avatar' : 'Create'}</h1>
         </div>
+        {existing && <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-block', marginBottom: 12 }}>\u2190 Back</Link></p>}
 
         {existing && <ModelViewer modelUrl={form.modelUrl || existing?.modelUrl} height={220} />}
 

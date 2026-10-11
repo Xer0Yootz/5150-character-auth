@@ -40,7 +40,7 @@ export default function LoginPage({ setUser }) {
     <main className="page-shell">
       <div className="panel">
         <div className="title-wrap">
-          <span className="tag">5150</span>
+          <span className="tag">Neon Vigil</span>
           <h1>Login</h1>
         </div>
 
@@ -52,13 +52,13 @@ export default function LoginPage({ setUser }) {
 
           <label>
             <span>Password</span>
-            <input name="password" type="password" onChange={handleChange} placeholder="••••••••" required />
+            <input name="password" type="password" onChange={handleChange} placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" required />
           </label>
 
           {error && <p className="error">{error}</p>}
 
           <button className="btn primary" type="submit" disabled={loading} aria-label="Log in">
-            <Icon name="login" /> {loading ? 'Signing in…' : 'Log in'}
+            <Icon name="login" /> {loading ? 'Signing in\u2026' : 'Log in'}
           </button>
         </form>
 
@@ -68,6 +68,8 @@ export default function LoginPage({ setUser }) {
           <a className="btn ghost" href="/auth/google">Google</a>
           <a className="btn ghost" href="/auth/github">GitHub</a>
         </div>
+
+        <p className="hub-meta" style={{ marginTop: 12, fontSize: 12 }}>BitChat login not active.</p>
 
         <p className="switch">
           New to the network? <Link to="/signup">Create an account</Link>

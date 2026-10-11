@@ -7,7 +7,6 @@ export default function GroupChatPage({ user, character }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
-  const [aiOn, setAiOn] = useState(true);
   const [aiReply, setAiReply] = useState('');
 
   useEffect(() => {
@@ -31,22 +30,6 @@ export default function GroupChatPage({ user, character }) {
     event.preventDefault();
     setError('');
     setAiReply('');
-
-    if (aiOn) {
-      try {
-        const response = await fetch('/api/gemini/chat', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Gemini failed');
-        setAiReply(data.reply);
-      } catch (err) {
-        setError(err.message);
-      }
-    }
 
     if (groupId) {
       const response = await fetch('/api/bitchat/send', {
@@ -72,14 +55,12 @@ export default function GroupChatPage({ user, character }) {
     <main className="page-shell">
       <div className="panel">
         <div className="title-wrap">
-          <span className="tag">5150</span>
+          <span className="tag">Neon Vigil</span>
           <h1>Chat</h1>
           <p className="hub-meta">{user.name} / {character.codename}</p>
         </div>
-        <p><Link to="/hub">Back</Link></p>
-        <label className="switch">
-          <input type="checkbox" checked={aiOn} onChange={(e) => setAiOn(e.target.checked)} /> Hexa (Gemini)
-        </label>
+        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-block', marginBottom: 12 }}>\u2190 Back</Link></p>
+        <p className="hub-meta" style={{ fontSize: 12, marginBottom: 8 }}>Hexa (Gemini) offline.</p>
         {groups.map((group) => (
           <button key={group.id} type="button" onClick={() => loadMessages(group.id)}>{group.name}</button>
         ))}

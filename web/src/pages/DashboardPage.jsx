@@ -49,25 +49,30 @@ export default function DashboardPage({ user, character, setUser }) {
   };
 
   return (
-    <main>
-      <h1>{user.name}</h1>
-      <button type="button" onClick={logout}>Log out</button>
-      <section className="panel">
-        <h2>{character.codename}</h2>
-        <p>{character.caste} / {character.tribe}</p>
-        <p>{character.zodiac}. {character.climate}. {character.element}.</p>
-        <p>{(character.abilities || []).join(', ')}</p>
-      </section>
-      <form onSubmit={search}>
-        <label>Search GitHub<input value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-        <button type="submit">Search</button>
-      </form>
-      {results.map((repo) => (
-        <p key={repo.id}>{repo.name} <button type="button" onClick={() => saveRepo(repo)}>Save</button></p>
-      ))}
-      <h2>Saved repos</h2>
-      {repos.map((repo) => <p key={repo.id}>{repo.repo_name}: {repo.ability_unlock}</p>)}
-      <p><Link to="/chat">Open chat</Link></p>
+    <main className="page-shell">
+      <div className="panel">
+        <div className="title-wrap">
+          <span className="tag">Neon Vigil</span>
+          <h1>{user.name}</h1>
+        </div>
+        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-block', marginBottom: 12 }}>\u2190 Back</Link></p>
+        <section className="panel">
+          <h2>{character.codename}</h2>
+          <p>{character.caste} / {character.tribe}</p>
+          <p>{character.zodiac}. {character.climate}. {character.element}.</p>
+          <p>{(character.abilities || []).join(', ')}</p>
+        </section>
+        <form onSubmit={search}>
+          <label>Search GitHub<input value={query} onChange={(e) => setQuery(e.target.value)} /></label>
+          <button type="submit" className="btn ghost">Search</button>
+        </form>
+        {results.map((repo) => (
+          <p key={repo.id}>{repo.name} <button type="button" onClick={() => saveRepo(repo)}>Save</button></p>
+        ))}
+        <h2>Saved repos</h2>
+        {repos.map((repo) => <p key={repo.id}>{repo.repo_name}: {repo.ability_unlock}</p>)}
+        <p style={{ marginTop: 12 }}><button type="button" className="btn ghost" onClick={logout}>Log out</button></p>
+      </div>
     </main>
   );
 }

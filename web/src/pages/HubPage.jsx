@@ -35,7 +35,7 @@ export default function HubPage({ user, character, setUser }) {
     <main className="page-shell">
       <div className="panel hub-panel">
         <div className="title-wrap">
-          <span className="tag">5150</span>
+          <span className="tag">Neon Vigil</span>
           <h1>{character?.codename || user.name}</h1>
           <p className="hub-meta">{character?.caste} / {character?.tribe}</p>
         </div>
