@@ -4,8 +4,8 @@ import { Icon } from '../icons.jsx';
 import WorldViewer from '../components/WorldViewer.jsx';
 
 const MODES = [
-  { id: 'procedural', label: 'In World Preview' },
-  { id: 'skybox', label: 'No Background Preview' }
+  { id: 'procedural', label: 'In World Preview', icon: 'globe' },
+  { id: 'skybox', label: 'No Background Preview', icon: 'image-off' }
 ];
 
 export default function HubPage({ user, character, setUser }) {
@@ -64,7 +64,10 @@ export default function HubPage({ user, character, setUser }) {
               type="button"
               className={viewMode === m.id ? 'mode-btn active' : 'mode-btn'}
               onClick={() => { setViewMode(m.id); setMapOpen(false); }}
+              aria-label={m.label}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
+              <Icon name={m.icon} />
               {m.label}
             </button>
           ))}
