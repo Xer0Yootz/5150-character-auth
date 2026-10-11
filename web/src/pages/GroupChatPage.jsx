@@ -8,6 +8,8 @@ export default function GroupChatPage({ user, character }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  const [btStatus, setBtStatus] = useState('Bluetooth not requested');
+  const [btDevice, setBtDevice] = useState('');
   const endRef = useRef(null);
 
   async function ensureRoom() {
@@ -49,6 +51,34 @@ export default function GroupChatPage({ user, character }) {
     setMessages(data.messages || []);
   };
 
+  const allowBluetooth = async () => {
+    if (!navigator.bluetooth) {
+      setBtStatus('Bluetooth not available in this browser');
+      return;
+    }
+    try {
+      setBtStatus('Requesting Bluetooth');
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['generic_access']
+      });
+      setBtDevice(device.name || 'Unnamed device');
+      setBtStatus('Bluetooth allowed');
+      device.addEventListener('gattserverdisconnected', () => {
+        setBtStatus('Device disconnected');
+        setBtDevice('');
+      });
+    } catch (err) {
+      if (err.name === 'NotFoundError') {
+        setBtStatus('No device selected');
+      } else if (err.name === 'SecurityError' || err.name === 'NotAllowedError') {
+        setBtStatus('Bluetooth blocked');
+      } else {
+        setBtStatus('Bluetooth failed');
+      }
+    }
+  };
+
   const send = async (event) => {
     event.preventDefault();
     setError('');
@@ -81,6 +111,13 @@ export default function GroupChatPage({ user, character }) {
           <p className="hub-meta">{user.name} / {character.codename}</p>
         </div>
         <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>
+
+        <div style={{ marginBottom: 10 }}>
+          <button type="button" className="btn ghost" onClick={allowBluetooth}>Allow Bluetooth</button>
+          <p className="hub-meta" style={{ fontSize: 11, marginTop: 4 }}>
+            {btStatus}{btDevice ? ` \u00b7 ${btDevice}` : ''}
+          </p>
+        </div>
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           {groups.map((group) => (
