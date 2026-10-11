@@ -56,7 +56,7 @@ export default function DashboardPage({ user, character, setUser }) {
           <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
           <h1>{user.name}</h1>
         </div>
-        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}><Icon name="back" /> Back</Link></p>
+        <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>
         <section className="panel">
           <h2>{character.codename}</h2>
           <p>{character.caste} / {character.tribe}</p>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ModelViewer from '../components/ModelViewer.jsx';
+import { Icon } from '../icons.jsx';
 
 const CITIES = [
   { name: 'New York, NY', lat: 40.7128, lon: -74.006 },
@@ -197,10 +198,10 @@ export default function CharacterCreation({ setCharacter, existing }) {
     <main className="page-shell">
       <div className="panel">
         <div className="title-wrap">
-          <span className="tag">Neon Vigil</span>
-          <h1>{existing ? 'Edit Avatar' : 'Create'}</h1>
+          <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
+          <h1>{existing ? 'Edit Info' : 'Create'}</h1>
         </div>
-        {existing && <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-block', marginBottom: 12 }}>\u2190 Back</Link></p>}
+        {existing && <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>}
 
         {existing && <ModelViewer modelUrl={form.modelUrl || existing?.modelUrl} height={220} />}
 

@@ -60,7 +60,7 @@ export default function GroupChatPage({ user, character }) {
           <h1>Chat</h1>
           <p className="hub-meta">{user.name} / {character.codename}</p>
         </div>
-        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}><Icon name="back" /> Back</Link></p>
+        <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>
         <p className="hub-meta" style={{ fontSize: 12, marginBottom: 8 }}>Hexa (Gemini) offline.</p>
         {groups.map((group) => (
           <button key={group.id} type="button" onClick={() => loadMessages(group.id)}>{group.name}</button>

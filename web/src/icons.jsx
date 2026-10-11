@@ -24,7 +24,12 @@ export function Icon({ name }) {
     );
   }
   if (name === 'back') {
-    return <svg {...common}><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>;
+    return (
+      <svg {...common}>
+        <polygon points="11 19 2 12 11 5 11 19" />
+        <polygon points="22 19 13 12 22 5 22 19" />
+      </svg>
+    );
   }
   return null;
 }
