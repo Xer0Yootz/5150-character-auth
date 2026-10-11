@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Icon } from '../icons.jsx';
 
 export default function GroupChatPage({ user, character }) {
   const [groups, setGroups] = useState([]);
@@ -55,11 +56,11 @@ export default function GroupChatPage({ user, character }) {
     <main className="page-shell">
       <div className="panel">
         <div className="title-wrap">
-          <span className="tag">Neon Vigil</span>
+          <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
           <h1>Chat</h1>
           <p className="hub-meta">{user.name} / {character.codename}</p>
         </div>
-        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-block', marginBottom: 12 }}>\u2190 Back</Link></p>
+        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}><Icon name="back" /> Back</Link></p>
         <p className="hub-meta" style={{ fontSize: 12, marginBottom: 8 }}>Hexa (Gemini) offline.</p>
         {groups.map((group) => (
           <button key={group.id} type="button" onClick={() => loadMessages(group.id)}>{group.name}</button>

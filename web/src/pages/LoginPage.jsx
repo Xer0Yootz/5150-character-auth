@@ -40,7 +40,7 @@ export default function LoginPage({ setUser }) {
     <main className="page-shell">
       <div className="panel">
         <div className="title-wrap">
-          <span className="tag">Neon Vigil</span>
+          <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
           <h1>Login</h1>
         </div>
 

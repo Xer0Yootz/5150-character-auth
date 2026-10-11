@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Icon } from '../icons.jsx';
 
 export default function DashboardPage({ user, character, setUser }) {
   const navigate = useNavigate();
@@ -52,10 +53,10 @@ export default function DashboardPage({ user, character, setUser }) {
     <main className="page-shell">
       <div className="panel">
         <div className="title-wrap">
-          <span className="tag">Neon Vigil</span>
+          <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
           <h1>{user.name}</h1>
         </div>
-        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-block', marginBottom: 12 }}>\u2190 Back</Link></p>
+        <p><Link to="/hub" className="btn ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}><Icon name="back" /> Back</Link></p>
         <section className="panel">
           <h2>{character.codename}</h2>
           <p>{character.caste} / {character.tribe}</p>
@@ -71,7 +72,7 @@ export default function DashboardPage({ user, character, setUser }) {
         ))}
         <h2>Saved repos</h2>
         {repos.map((repo) => <p key={repo.id}>{repo.repo_name}: {repo.ability_unlock}</p>)}
-        <p style={{ marginTop: 12 }}><button type="button" className="btn ghost" onClick={logout}>Log out</button></p>
+        <p style={{ marginTop: 12 }}><button type="button" className="btn ghost" onClick={logout}><Icon name="logout" /> Log out</button></p>
       </div>
     </main>
   );
