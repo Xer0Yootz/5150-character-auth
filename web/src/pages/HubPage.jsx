@@ -48,6 +48,15 @@ export default function HubPage({ user, character, setUser }) {
     navigate('/');
   }
 
+  const iconBtn = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+    padding: 0
+  };
+
   return (
     <main className="page-shell">
       <div className="panel hub-panel">
@@ -65,10 +74,9 @@ export default function HubPage({ user, character, setUser }) {
               className={viewMode === m.id ? 'mode-btn active' : 'mode-btn'}
               onClick={() => { setViewMode(m.id); setMapOpen(false); }}
               aria-label={m.label}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={iconBtn}
             >
               <Icon name={m.icon} />
-              {m.label}
             </button>
           ))}
         </div>
@@ -100,21 +108,20 @@ export default function HubPage({ user, character, setUser }) {
         {chatOpen && (
           <div className="panel" style={{ marginTop: 12, padding: 12 }}>
             <p className="hub-meta" style={{ marginBottom: 8 }}>Chat</p>
-            <p className="hub-meta" style={{ fontSize: 12 }}>Hexa offline. BitChat groups load on the full chat page.</p>
             <Link className="btn ghost" to="/chat" style={{ marginTop: 8, display: 'inline-block' }}>Open full chat</Link>
           </div>
         )}
 
         <nav className="hub-actions" style={{ marginTop: 12 }}>
-          <button type="button" className="btn primary" onClick={() => setChatOpen((v) => !v)}>
-            <Icon name="chat" /> Chat
+          <button type="button" className="btn primary" onClick={() => setChatOpen((v) => !v)} aria-label="Chat" style={iconBtn}>
+            <Icon name="chat" />
           </button>
-          <button type="button" className={mapOpen ? 'btn primary' : 'btn ghost'} onClick={() => setMapOpen((v) => !v)}>
+          <button type="button" className={mapOpen ? 'btn primary' : 'btn ghost'} onClick={() => setMapOpen((v) => !v)} aria-label="MAP">
             MAP
           </button>
-          <Link className="btn ghost" to="/character/edit"><Icon name="avatar" /> Edit Info</Link>
-          <Link className="btn ghost" to="/dashboard"><Icon name="repos" /> Repos</Link>
-          <button type="button" className="btn ghost" onClick={logout} aria-label="Log out"><Icon name="logout" /> Log out</button>
+          <Link className="btn ghost" to="/character/edit" aria-label="Edit Info" style={iconBtn}><Icon name="avatar" /></Link>
+          <Link className="btn ghost" to="/dashboard" aria-label="Repos" style={iconBtn}><Icon name="repos" /></Link>
+          <button type="button" className="btn ghost" onClick={logout} aria-label="Log out" style={iconBtn}><Icon name="logout" /></button>
         </nav>
 
         <p style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: '#8aa0b8' }}>

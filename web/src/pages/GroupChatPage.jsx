@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 
-const DISCORD_SERVER_ID = ''; // set when you have a Discord server ID
+const DISCORD_SERVER_ID = '';
 
 export default function GroupChatPage({ user, character }) {
   const [groups, setGroups] = useState([]);
@@ -105,6 +105,15 @@ export default function GroupChatPage({ user, character }) {
     }
   };
 
+  const iconBtn = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+    padding: 0
+  };
+
   return (
     <main className="page-shell">
       <div className="panel">
@@ -113,30 +122,22 @@ export default function GroupChatPage({ user, character }) {
           <h1>Chat</h1>
           <p className="hub-meta">{user.name} / {character.codename}</p>
         </div>
-        <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>
+        <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ ...iconBtn, marginBottom: 12 }}><Icon name="back" /></Link></p>
 
-        <div style={{ marginBottom: 10 }}>
-          <button type="button" className="btn ghost" onClick={allowBluetooth} aria-label="Allow Bluetooth" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="bluetooth" /> Allow Bluetooth
+        <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button type="button" className="btn ghost" onClick={allowBluetooth} aria-label="Allow Bluetooth" style={iconBtn}>
+            <Icon name="bluetooth" />
           </button>
-          <p className="hub-meta" style={{ fontSize: 11, marginTop: 4 }}>
+          <p className="hub-meta" style={{ fontSize: 11, margin: 0 }}>
             {btStatus}{btDevice ? ` \u00b7 ${btDevice}` : ''}
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className={room === 'neon' ? 'btn primary' : 'btn ghost'}
-            onClick={() => setRoom('neon')}
-          >
+          <button type="button" className={room === 'neon' ? 'btn primary' : 'btn ghost'} onClick={() => setRoom('neon')} aria-label="Neon Vigil room">
             Neon Vigil
           </button>
-          <button
-            type="button"
-            className={room === 'discord' ? 'btn primary' : 'btn ghost'}
-            onClick={() => setRoom('discord')}
-          >
+          <button type="button" className={room === 'discord' ? 'btn primary' : 'btn ghost'} onClick={() => setRoom('discord')} aria-label="Discord room">
             Discord
           </button>
         </div>
@@ -183,7 +184,7 @@ export default function GroupChatPage({ user, character }) {
                 <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message" />
               </label>
               {error && <p className="error">{error}</p>}
-              <button className="btn primary" type="submit">Send</button>
+              <button className="btn primary" type="submit" aria-label="Send">Send</button>
             </form>
           </>
         )}
@@ -212,7 +213,7 @@ export default function GroupChatPage({ user, character }) {
               <>
                 <p className="hub-meta" style={{ marginBottom: 8 }}>Discord room</p>
                 <p className="hub-meta" style={{ fontSize: 12, textAlign: 'center' }}>
-                  Paste your Discord server ID to show the widget here. Or open your server in a new tab.
+                  Paste your Discord server ID to show the widget here.
                 </p>
                 <a className="btn ghost" href="https://discord.com" target="_blank" rel="noreferrer" style={{ marginTop: 12 }}>
                   Open Discord
