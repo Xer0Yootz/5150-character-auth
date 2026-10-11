@@ -279,6 +279,13 @@ app.get('/api/bitchat/groups', (req, res) => {
   res.json({ groups });
 });
 
+app.post('/api/bitchat/groups', (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  const name = String(req.body?.name || 'Neon Vigil').trim();
+  const id = bitChat.createGroupChat(name, req.user.id, []);
+  res.json({ id, name });
+});
+
 app.post('/api/bitchat/send', (req, res) => {
   if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
   const { recipientId, groupId, ciphertext, nonce } = req.body || {};

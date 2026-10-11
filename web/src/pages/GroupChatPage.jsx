@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../icons.jsx';
 
@@ -8,20 +8,42 @@ export default function GroupChatPage({ user, character }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
-  const [aiReply, setAiReply] = useState('');
+  const endRef = useRef(null);
+
+  async function ensureRoom() {
+    const keyRes = await fetch('/api/bitchat/keypair', { credentials: 'include' });
+    if (!keyRes.ok) return;
+    const groupsRes = await fetch('/api/bitchat/groups', { credentials: 'include' });
+    const groupsData = await groupsRes.json();
+    let list = groupsData.groups || [];
+    if (!list.length) {
+      const createRes = await fetch('/api/bitchat/groups', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Neon Vigil' })
+      });
+      if (createRes.ok) {
+        const created = await createRes.json();
+        list = [{ id: created.id, name: 'Neon Vigil' }];
+      }
+    }
+    setGroups(list);
+    if (list[0]) {
+      setGroupId(list[0].id);
+      loadMessages(list[0].id);
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      await fetch('/api/bitchat/keypair', { credentials: 'include' });
-      const response = await fetch('/api/bitchat/groups', { credentials: 'include' });
-      const data = await response.json();
-      setGroups(data.groups || []);
-    }
-    load();
+    ensureRoom();
   }, []);
 
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   const loadMessages = async (id) => {
-    setGroupId(id);
     const response = await fetch(`/api/bitchat/messages/${id}`, { credentials: 'include' });
     const data = await response.json();
     setMessages(data.messages || []);
@@ -30,25 +52,23 @@ export default function GroupChatPage({ user, character }) {
   const send = async (event) => {
     event.preventDefault();
     setError('');
-    setAiReply('');
-
-    if (groupId) {
-      const response = await fetch('/api/bitchat/send', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          groupId,
-          ciphertext: text,
-          nonce: 'plain'
-        })
-      });
-      if (response.ok) {
-        setText('');
-        loadMessages(groupId);
-      }
-    } else {
+    if (!text.trim() || !groupId) return;
+    const response = await fetch('/api/bitchat/send', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        groupId,
+        ciphertext: text.trim(),
+        nonce: 'plain'
+      })
+    });
+    if (response.ok) {
       setText('');
+      loadMessages(groupId);
+    } else {
+      const data = await response.json().catch(() => ({}));
+      setError(data.message || 'Send failed');
     }
   };
 
@@ -61,18 +81,59 @@ export default function GroupChatPage({ user, character }) {
           <p className="hub-meta">{user.name} / {character.codename}</p>
         </div>
         <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>
-        <p className="hub-meta" style={{ fontSize: 12, marginBottom: 8 }}>Hexa (Gemini) offline.</p>
-        {groups.map((group) => (
-          <button key={group.id} type="button" onClick={() => loadMessages(group.id)}>{group.name}</button>
-        ))}
-        <div className="form">
-          {messages.map((message) => (
-            <p key={message.id}>{message.sender_name}: {message.ciphertext}</p>
+
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          {groups.map((group) => (
+            <button
+              key={group.id}
+              type="button"
+              className={groupId === group.id ? 'btn primary' : 'btn ghost'}
+              onClick={() => { setGroupId(group.id); loadMessages(group.id); }}
+            >
+              {group.name}
+            </button>
           ))}
-          {aiReply && <p className="hub-meta">Hexa: {aiReply}</p>}
         </div>
+
+        <div style={{
+          height: 280,
+          overflowY: 'auto',
+          border: '1px solid rgba(0, 240, 255, 0.3)',
+          padding: 10,
+          marginBottom: 10,
+          background: 'rgba(0,0,0,0.35)'
+        }}>
+          {messages.length === 0 && <p className="hub-meta" style={{ fontSize: 12 }}>No messages yet.</p>}
+          {messages.map((message) => {
+            const mine = message.sender_id === user.id;
+            return (
+              <div key={message.id} style={{
+                display: 'flex',
+                justifyContent: mine ? 'flex-end' : 'flex-start',
+                marginBottom: 8
+              }}>
+                <div style={{
+                  maxWidth: '75%',
+                  padding: '8px 10px',
+                  background: mine ? 'rgba(195, 0, 255, 0.25)' : 'rgba(0, 240, 255, 0.12)',
+                  border: mine ? '1px solid rgba(195, 0, 255, 0.5)' : '1px solid rgba(0, 240, 255, 0.4)'
+                }}>
+                  <div style={{ fontSize: 10, color: '#8aa0b8', marginBottom: 2 }}>
+                    {mine ? 'You' : message.sender_name}
+                  </div>
+                  <div style={{ fontSize: 14 }}>{message.ciphertext}</div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={endRef} />
+        </div>
+
         <form className="form" onSubmit={send}>
-          <label><span>Message</span><input value={text} onChange={(e) => setText(e.target.value)} /></label>
+          <label>
+            <span>Message</span>
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message" />
+          </label>
           {error && <p className="error">{error}</p>}
           <button className="btn primary" type="submit">Send</button>
         </form>
