@@ -93,7 +93,7 @@ export default function HubPage({ user, character, setUser }) {
           <button type="button" className={mapOpen ? 'btn primary' : 'btn ghost'} onClick={() => setMapOpen((v) => !v)}>
             MAP
           </button>
-          <Link className="btn ghost" to="/character/edit"><Icon name="avatar" /> Edit Avatar</Link>
+          <Link className="btn ghost" to="/character/edit"><Icon name="avatar" /> Edit Info</Link>
           <Link className="btn ghost" to="/dashboard"><Icon name="repos" /> Repos</Link>
           <button type="button" className="btn ghost" onClick={logout} aria-label="Log out"><Icon name="logout" /> Log out</button>
         </nav>
