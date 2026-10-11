@@ -11,6 +11,7 @@ import * as db from './db.js';
 import { assignCaste, getStartingAbilities } from './caste-logic.js';
 import BitChatService from './bitchat-service.js';
 import { getAbilityUnlock, searchRepos } from './github-service.js';
+import { geminiReply } from './gemini-service.js';
 
 dotenv.config();
 
@@ -192,6 +193,20 @@ app.get('/api/character/me', (req, res) => {
   const character = db.getCharacterByUserId(req.user.id);
   if (!character) return res.status(404).json({ message: 'No character found.' });
   res.json({ character });
+});
+
+app.post('/api/gemini/chat', async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ message: 'Not authenticated.' });
+  const { message } = req.body || {};
+  if (!message) return res.status(400).json({ message: 'Message required.' });
+
+  const character = db.getCharacterByUserId(req.user.id);
+  try {
+    const reply = await geminiReply(process.env.GEMINI_API_KEY, message, character);
+    res.json({ reply });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Gemini call failed.' });
+  }
 });
 
 app.get('/api/repos/search', async (req, res) => {
