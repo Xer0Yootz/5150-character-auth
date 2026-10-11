@@ -130,6 +130,13 @@ export function createCharacter({
   userId, codename, birthday, location, latitude, longitude,
   zodiac, climate, element, caste, tribe, abilities, modelUrl = null
 }) {
+  const existing = getCharacterByUserId(userId);
+  if (existing) {
+    return updateCharacter(existing.id, {
+      codename, birthday, location, latitude, longitude,
+      zodiac, climate, element, caste, tribe, abilities, modelUrl
+    });
+  }
   const id = `char_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   db.prepare(`
     INSERT INTO characters (
@@ -140,6 +147,28 @@ export function createCharacter({
     id, userId, codename, birthday, location, latitude, longitude,
     zodiac, climate, element, caste, tribe, JSON.stringify(abilities || []), modelUrl
   );
+  return getCharacterById(id);
+}
+
+export function updateCharacter(id, updates) {
+  const fields = {
+    codename: updates.codename,
+    birthday: updates.birthday,
+    location: updates.location,
+    latitude: updates.latitude,
+    longitude: updates.longitude,
+    zodiac: updates.zodiac,
+    climate: updates.climate,
+    element: updates.element,
+    caste: updates.caste,
+    tribe: updates.tribe,
+    abilities: JSON.stringify(updates.abilities || []),
+    model_url: updates.modelUrl || null
+  };
+  const keys = Object.keys(fields);
+  const values = keys.map((k) => fields[k]);
+  const sql = `UPDATE characters SET ${keys.map((k) => `${k} = ?`).join(', ')} WHERE id = ?`;
+  db.prepare(sql).run(...values, id);
   return getCharacterById(id);
 }
 

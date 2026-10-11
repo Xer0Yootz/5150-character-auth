@@ -17,6 +17,7 @@ export default function HubPage({ user, character, setUser }) {
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('5150-view') || 'procedural');
   const [chatOpen, setChatOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [weather, setWeather] = useState('');
 
   useEffect(() => {
     localStorage.setItem('5150-lights', lightsOn ? 'on' : 'off');
@@ -25,6 +26,21 @@ export default function HubPage({ user, character, setUser }) {
   useEffect(() => {
     localStorage.setItem('5150-view', viewMode);
   }, [viewMode]);
+
+  useEffect(() => {
+    if (!character?.latitude || !character?.longitude) return;
+    async function load() {
+      try {
+        const res = await fetch(`/api/weather?lat=${character.latitude}&lon=${character.longitude}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setWeather(`${data.label} ${data.temp != null ? Math.round(data.temp) + '\u00b0C' : ''}`);
+      } catch {
+        setWeather('Weather unavailable');
+      }
+    }
+    load();
+  }, [character]);
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
@@ -98,7 +114,10 @@ export default function HubPage({ user, character, setUser }) {
           <button type="button" className="btn ghost" onClick={logout} aria-label="Log out"><Icon name="logout" /> Log out</button>
         </nav>
 
-        <p style={{ textAlign: 'center', marginTop: 24, fontSize: 12, letterSpacing: '0.08em', color: '#8aa0b8' }}>Neon Vigil</p>
+        <p style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: '#8aa0b8' }}>
+          GRID STATUS: {weather || 'reading'} \u00b7 {character?.location || 'no location'}
+        </p>
+        <p style={{ textAlign: 'center', marginTop: 8, fontSize: 12, letterSpacing: '0.08em', color: '#8aa0b8' }}>Neon Vigil</p>
       </div>
     </main>
   );

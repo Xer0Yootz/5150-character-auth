@@ -16,22 +16,18 @@ export default function LoginPage({ setUser }) {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(form)
     });
-
     const data = await res.json();
     setLoading(false);
-
     if (!res.ok) {
       setError(data.message || 'Login failed.');
       return;
     }
-
     setUser(data.user);
     navigate('/');
   }
@@ -43,34 +39,26 @@ export default function LoginPage({ setUser }) {
           <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
           <h1>Login</h1>
         </div>
-
         <form className="form" onSubmit={handleSubmit}>
           <label>
             <span>Email</span>
             <input name="email" type="email" onChange={handleChange} placeholder="you@example.com" required />
           </label>
-
           <label>
             <span>Password</span>
             <input name="password" type="password" onChange={handleChange} placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" required />
           </label>
-
           {error && <p className="error">{error}</p>}
-
           <button className="btn primary" type="submit" disabled={loading} aria-label="Log in">
             <Icon name="login" /> {loading ? 'Signing in\u2026' : 'Log in'}
           </button>
         </form>
-
         <div className="divider"><span>or</span></div>
-
         <div className="oauth-row">
           <a className="btn ghost" href="/auth/google">Google</a>
           <a className="btn ghost" href="/auth/github">GitHub</a>
         </div>
-
         <p className="hub-meta" style={{ marginTop: 12, fontSize: 12 }}>BitChat login not active.</p>
-
         <p className="switch">
           New to the network? <Link to="/signup">Create an account</Link>
         </p>

@@ -143,6 +143,20 @@ export default function CharacterCreation({ setCharacter, existing }) {
     setCityMode(true);
   };
 
+  const refineAfterGps = (e) => {
+    const name = e.target.value;
+    if (!name) return;
+    const city = CITIES.find((c) => c.name === name);
+    if (!city) return;
+    setForm((f) => ({
+      ...f,
+      location: city.name,
+      latitude: city.lat,
+      longitude: city.lon
+    }));
+    setGpsStatus(`Refined to ${city.name}`);
+  };
+
   const clearCity = () => {
     setCityMode(false);
     setForm((f) => ({ ...f, location: '', latitude: null, longitude: null }));
@@ -201,7 +215,7 @@ export default function CharacterCreation({ setCharacter, existing }) {
           <span className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Icon name="hex" /></span>
           <h1>{existing ? 'Edit Info' : 'Create'}</h1>
         </div>
-        {existing && <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>}
+        <p><Link to={existing ? '/hub' : '/'} className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>
 
         {existing && <ModelViewer modelUrl={form.modelUrl || existing?.modelUrl} height={220} />}
 
@@ -228,6 +242,14 @@ export default function CharacterCreation({ setCharacter, existing }) {
                 </>
               )}
             </div>
+            {useGpsMode && (
+              <select onChange={refineAfterGps} style={{ ...selectStyle, display: 'block', width: '100%', marginTop: 8 }}>
+                <option value="">Refine location</option>
+                {CITIES.map((c) => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            )}
             {gpsStatus && <p className="hub-meta" style={{ marginTop: 6 }}>{gpsStatus}</p>}
             {form.location && form.latitude != null && (
               <p className="hub-meta" style={{ marginTop: 6 }}>
