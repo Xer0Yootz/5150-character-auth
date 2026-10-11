@@ -113,7 +113,9 @@ export default function GroupChatPage({ user, character }) {
         <p><Link to="/hub" className="btn ghost" aria-label="Back" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, marginBottom: 12, padding: 0 }}><Icon name="back" /></Link></p>
 
         <div style={{ marginBottom: 10 }}>
-          <button type="button" className="btn ghost" onClick={allowBluetooth}>Allow Bluetooth</button>
+          <button type="button" className="btn ghost" onClick={allowBluetooth} aria-label="Allow Bluetooth" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="bluetooth" /> Allow Bluetooth
+          </button>
           <p className="hub-meta" style={{ fontSize: 11, marginTop: 4 }}>
             {btStatus}{btDevice ? ` \u00b7 ${btDevice}` : ''}
           </p>
